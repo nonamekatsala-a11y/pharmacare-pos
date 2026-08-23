@@ -177,6 +177,6 @@ export const ADMIN_ACCOUNT = {
   id: 'admin-1',
   userName: 'admin',
   fullName: 'System Administrator',
-  email: 'admin@pharmacare.local',
+  email: 'admin32@gmail.com',
   role: 'Admin' as const,
 }

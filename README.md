@@ -92,6 +92,19 @@ VITE_API_BASE_URL=https://your-api.example.com/api
 
 After saving the variables, redeploy the project. The deployment URL can then be added to Supabase Authentication URL configuration if password authentication redirects need to return to the hosted app.
 
+### Deploying to Cloudflare Pages
+
+Import the GitHub repository into Cloudflare Pages. Because the repository contains the contents of the `web` directory at its root, use these settings:
+
+```
+Framework preset: Vite
+Build command: npm run build
+Build output directory: dist
+Root directory: /
+```
+
+Add the same `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and deployed `VITE_API_BASE_URL` variables under the Pages project settings for the Production environment. The `public/_redirects` file is included so direct links to React routes work correctly.
+
 ### Linting and Type Checking
 
 Check for linting errors:
