@@ -282,6 +282,18 @@ export const medicineService = {
 
     const pharmacyId = getEffectivePharmacyId()
     const supabase = getSupabaseClient()
+
+    const { data: warehouseItems, error: warehouseItemsError } = await supabase
+      .from('warehouse_items')
+      .select('id')
+      .eq('medicine_id', id)
+
+    if (warehouseItemsError) throw warehouseItemsError
+
+    for (const warehouseItem of warehouseItems || []) {
+      await warehouseService.deleteItem(warehouseItem.id)
+    }
+
     const { error } = await supabase
       .from('pharmacy_inventory')
       .delete()
