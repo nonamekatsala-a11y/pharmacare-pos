@@ -13,6 +13,7 @@ export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null)
   const [adminSelectedPharmacy, setAdminSelectedPharmacy] = useState<Pharmacy | null>(null)
   const [formMessage, setFormMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -156,14 +157,19 @@ export default function ExpensesPage() {
   }
 
   const handleDeleteExpense = async (expenseId: string) => {
-    if (confirm('Are you sure you want to delete this expense?')) {
-      try {
-        await expenseService.delete(expenseId)
-        loadExpenses()
-        loadSummary()
-      } catch (error) {
-        console.error('Failed to delete expense:', error)
-      }
+    setDeleteExpenseId(expenseId)
+  }
+
+  const confirmDeleteExpense = async () => {
+    if (!deleteExpenseId) return
+
+    try {
+      await expenseService.delete(deleteExpenseId)
+      setDeleteExpenseId(null)
+      await Promise.all([loadExpenses(), loadSummary()])
+    } catch (error) {
+      console.error('Failed to delete expense:', error)
+      setFormMessage({ type: 'error', text: 'Failed to delete expense' })
     }
   }
 
@@ -335,6 +341,35 @@ export default function ExpensesPage() {
           </table>
         </div>
       </div>
+
+      {deleteExpenseId && (
+        <Modal
+          isOpen={true}
+          title="Delete Expense"
+          onClose={() => setDeleteExpenseId(null)}
+          size="sm"
+        >
+          <div className="space-y-4">
+            {(() => {
+              const expense = expenses.find((item) => item.id === deleteExpenseId)
+              return (
+                <p className="text-sm text-gray-600">
+                  Delete <strong>{expense?.description || 'this expense'}</strong>
+                  {expense ? ` (${formatCurrency(expense.amount)})` : ''}? This action cannot be undone.
+                </p>
+              )
+            })()}
+            <div className="flex justify-end gap-3">
+              <Button type="button" variant="secondary" onClick={() => setDeleteExpenseId(null)}>
+                Cancel
+              </Button>
+              <Button type="button" variant="danger" onClick={confirmDeleteExpense}>
+                Delete
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Add Expense Modal */}
       {isModalOpen && (
