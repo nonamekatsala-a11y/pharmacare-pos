@@ -48,7 +48,7 @@ export default function POSPage() {
     }
   }
 
-  const handleCheckout = async (amountReceived: number) => {
+  const handleCheckout = async (amountReceived: number): Promise<void> => {
     if (cartItems.length === 0 || !user) {
       setError('Cart is empty or user not authenticated')
       return

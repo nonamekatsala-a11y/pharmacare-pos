@@ -3,13 +3,14 @@ import { useCartStore } from '@store/cartStore'
 import { formatCurrency } from '@utils/formatters'
 
 interface CartProps {
-  onCheckout: (amountReceived: number) => void
+  onCheckout: (amountReceived: number) => Promise<void>
 }
 
 export default function Cart({ onCheckout }: CartProps) {
   const { items, removeItem, updateQuantity, getSubtotal, getTotal, clearCart } =
     useCartStore()
   const [amountReceived, setAmountReceived] = useState<number>(0)
+  const [isProcessing, setIsProcessing] = useState(false)
 
   const subtotal = getSubtotal()
   const total = getTotal()
@@ -24,6 +25,15 @@ export default function Cart({ onCheckout }: CartProps) {
       handleRemove(medicineId)
     } else {
       updateQuantity(medicineId, quantity)
+    }
+  }
+
+  const handleCheckout = async () => {
+    setIsProcessing(true)
+    try {
+      await onCheckout(amountReceived)
+    } finally {
+      setIsProcessing(false)
     }
   }
 
@@ -130,15 +140,15 @@ export default function Cart({ onCheckout }: CartProps) {
       {/* Action Buttons */}
       <div className="space-y-2 flex-shrink-0">
         <button
-          onClick={() => onCheckout(amountReceived)}
-          disabled={items.length === 0 || amountReceived < total}
+          onClick={handleCheckout}
+          disabled={items.length === 0 || amountReceived < total || isProcessing}
           className="w-full bg-primary-500 text-white font-semibold py-2.5 rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
         >
-          Complete Sale
+          {isProcessing ? 'Completing Sale...' : 'Complete Sale'}
         </button>
         <button
           onClick={() => clearCart()}
-          disabled={items.length === 0}
+          disabled={items.length === 0 || isProcessing}
           className="w-full border border-primary-300 text-primary-700 font-semibold py-2 rounded-lg hover:bg-primary-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
         >
           Clear Cart
