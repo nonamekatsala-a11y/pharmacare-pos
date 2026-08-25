@@ -175,7 +175,7 @@ export default function POSPage() {
         </div>
 
         {/* Desktop: Side-by-Side Layout */}
-        <div className="hidden lg:grid grid-cols-[minmax(360px,1.1fr)_18px_minmax(340px,0.9fr)] h-full gap-0 p-6 max-w-[1500px] mx-auto w-full">
+        <div className="hidden lg:grid grid-cols-[minmax(500px,1.5fr)_24px_minmax(450px,1fr)] h-full gap-0 p-6 max-w-[1920px] mx-auto w-full">
           {/* Left Panel: Medicine Selector */}
           <div className="bg-white rounded-2xl border border-primary-100 p-6 overflow-y-auto min-h-0">
             <MedicineSelector medicines={medicines} isLoading={isLoading} />
