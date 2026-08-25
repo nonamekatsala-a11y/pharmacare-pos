@@ -35,7 +35,7 @@ export default function InventoryList({ inventory, onUpdate, onDelete }: Invento
             inventory.map((item) => {
               const daysLeft = item.expiryDate ? daysUntilExpiry(item.expiryDate) : null
               const expired = item.expiryDate ? isExpired(item.expiryDate) : false
-              const isLowStock = item.medicine?.quantity <= item.medicine?.reorderLevel
+              const isLowStock = item.medicine?.quantity !== undefined && item.medicine?.reorderLevel !== undefined && item.medicine.quantity <= item.medicine.reorderLevel
 
               return (
                 <tr
