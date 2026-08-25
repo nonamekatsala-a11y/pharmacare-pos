@@ -171,7 +171,10 @@ export default function InventoryPage() {
       {/* Summary Cards */}
       <div className="mb-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {/* Total Medicines Card */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+        <button
+          onClick={() => navigate('/inventory')}
+          className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow text-left w-full"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Medicines</p>
@@ -184,10 +187,13 @@ export default function InventoryPage() {
               </svg>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Low Stock Card */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+        <button
+          onClick={() => navigate('/inventory?filter=low-stock')}
+          className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow text-left w-full"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Low Stock Items</p>
@@ -200,11 +206,14 @@ export default function InventoryPage() {
               </svg>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Allocated Medicines Card */}
         {allocatedMedicines > 0 && (
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+          <button
+            onClick={() => navigate('/inventory')}
+            className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow text-left w-full"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Allocated Medicines</p>
@@ -217,12 +226,15 @@ export default function InventoryPage() {
                 </svg>
               </div>
             </div>
-          </div>
+          </button>
         )}
 
         {/* Inventory Value Card - Admin Only */}
         {user?.role === 'Admin' && (
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+          <button
+            onClick={() => navigate('/inventory')}
+            className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow text-left w-full"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Inventory Value</p>
@@ -235,7 +247,7 @@ export default function InventoryPage() {
                 </svg>
               </div>
             </div>
-          </div>
+          </button>
         )}
       </div>
 
