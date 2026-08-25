@@ -4,11 +4,9 @@ import { formatCurrency } from '@utils/formatters'
 
 interface CartProps {
   onCheckout: (amountReceived: number) => void
-  selectedCustomer: string
-  onCustomerChange: (customer: string) => void
 }
 
-export default function Cart({ onCheckout, selectedCustomer, onCustomerChange }: CartProps) {
+export default function Cart({ onCheckout }: CartProps) {
   const { items, removeItem, updateQuantity, getSubtotal, getTotal, clearCart } =
     useCartStore()
   const [amountReceived, setAmountReceived] = useState<number>(0)
@@ -37,20 +35,6 @@ export default function Cart({ onCheckout, selectedCustomer, onCustomerChange }:
         <p className="text-xs text-primary-600">
           {items.length} {items.length === 1 ? 'item' : 'items'}
         </p>
-      </div>
-
-      {/* Customer Selection */}
-      <div className="mb-3">
-        <label className="block text-xs font-semibold text-primary-700 mb-1">
-          Customer (optional)
-        </label>
-        <input
-          type="text"
-          value={selectedCustomer}
-          onChange={(e) => onCustomerChange(e.target.value)}
-          placeholder="Enter customer name or ID..."
-          className="w-full px-3 py-2 border border-primary-200 rounded-lg bg-primary-50 text-primary-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white"
-        />
       </div>
 
       {/* Cart Items - Large Section */}

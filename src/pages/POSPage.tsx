@@ -18,7 +18,6 @@ export default function POSPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [isReceiptOpen, setIsReceiptOpen] = useState(false)
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null)
-  const [selectedCustomer, setSelectedCustomer] = useState<string>('')
 
   const { items: cartItems, clearCart, getSubtotal, getTax, getTotal } = useCartStore()
 
@@ -80,7 +79,6 @@ export default function POSPage() {
         saleDate: new Date().toISOString(),
         amountReceived,
         paymentMethod: 'Cash' as const,
-        customerId: selectedCustomer || undefined,
       }
 
       await saleService.create(checkoutRequest)
@@ -172,11 +170,7 @@ export default function POSPage() {
           
           {/* Cart - Smaller */}
           <div className="flex-1 bg-white rounded-2xl border border-primary-100 p-4 min-h-0">
-            <Cart 
-              onCheckout={handleCheckout}
-              selectedCustomer={selectedCustomer}
-              onCustomerChange={setSelectedCustomer}
-            />
+            <Cart onCheckout={handleCheckout} />
           </div>
         </div>
 
@@ -192,11 +186,7 @@ export default function POSPage() {
 
           {/* Right Panel: Cart */}
           <div className="bg-white rounded-2xl border border-primary-100 p-6 overflow-y-auto min-h-0 flex flex-col">
-            <Cart 
-              onCheckout={handleCheckout}
-              selectedCustomer={selectedCustomer}
-              onCustomerChange={setSelectedCustomer}
-            />
+            <Cart onCheckout={handleCheckout} />
           </div>
         </div>
       </div>
