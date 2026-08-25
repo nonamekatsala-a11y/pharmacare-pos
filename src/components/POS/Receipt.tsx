@@ -170,10 +170,9 @@ export default function Receipt({ isOpen, data, onClose }: ReceiptProps) {
               <div className="mb-4 space-y-2">
                 {data.items.map((item, index) => (
                   <div key={`${item.medicineId}-${index}`} className="text-xs">
-                    {/* Item Name and Barcode */}
+                    {/* Item Name */}
                     <div className="mb-1">
                       <p className="font-bold text-primary-700 truncate">{item.medicineName}</p>
-                      <p className="text-primary-500 text-xs">{item.barcode}</p>
                     </div>
 
                     {/* Item Details Grid */}
