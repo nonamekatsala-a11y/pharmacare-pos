@@ -3,10 +3,11 @@ import { formatCurrency, daysUntilExpiry, isExpired } from '@utils/formatters'
 
 interface InventoryListProps {
   inventory: InventoryItem[]
+  onUpdate?: (medicineId: string) => void
   onDelete?: (medicineId: string) => void
 }
 
-export default function InventoryList({ inventory, onDelete }: InventoryListProps) {
+export default function InventoryList({ inventory, onUpdate, onDelete }: InventoryListProps) {
   return (
     <div className="rounded-lg bg-white shadow-sm overflow-x-auto">
       <table className="w-full">
@@ -18,7 +19,7 @@ export default function InventoryList({ inventory, onDelete }: InventoryListProp
             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Selling Price</th>
             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Profit</th>
             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Expiry Date</th>
-            {onDelete && (
+            {(onUpdate || onDelete) && (
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
             )}
           </tr>
@@ -26,7 +27,7 @@ export default function InventoryList({ inventory, onDelete }: InventoryListProp
         <tbody>
           {inventory.length === 0 ? (
             <tr>
-              <td colSpan={onDelete ? 7 : 6} className="px-6 py-8 text-center text-gray-500">
+              <td colSpan={onUpdate || onDelete ? 7 : 6} className="px-6 py-8 text-center text-gray-500">
                 No inventory items found
               </td>
             </tr>
@@ -90,15 +91,28 @@ export default function InventoryList({ inventory, onDelete }: InventoryListProp
                       <span className="text-gray-400">-</span>
                     )}
                   </td>
-                  {onDelete && (
+                  {(onUpdate || onDelete) && (
                     <td className="px-6 py-4 text-sm">
-                      <button
-                        type="button"
-                        onClick={() => onDelete(item.medicineId)}
-                        className="rounded bg-red-100 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-200"
-                      >
-                        Delete
-                      </button>
+                      <div className="flex gap-2">
+                        {onUpdate && (
+                          <button
+                            type="button"
+                            onClick={() => onUpdate(item.medicineId)}
+                            className="rounded bg-blue-100 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-200"
+                          >
+                            Update
+                          </button>
+                        )}
+                        {onDelete && (
+                          <button
+                            type="button"
+                            onClick={() => onDelete(item.medicineId)}
+                            className="rounded bg-red-100 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-200"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </td>
                   )}
                 </tr>

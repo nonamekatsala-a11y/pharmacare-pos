@@ -367,6 +367,25 @@ export const inventoryService = {
 
     if (updateError) throw updateError
   },
+
+  updateQuantity: async (id: string, quantity: number): Promise<void> => {
+    const { user } = useAuthStore.getState()
+    if (user?.role !== 'Admin') {
+      throw new Error('Only administrators can update inventory.')
+    }
+    if (!Number.isInteger(quantity) || quantity < 0) {
+      throw new Error('Inventory quantity must be a whole number of zero or more.')
+    }
+
+    const pharmacyId = getEffectivePharmacyId()
+    const { error } = await getSupabaseClient()
+      .from('pharmacy_inventory')
+      .update({ quantity })
+      .eq('medicine_id', id)
+      .eq('pharmacy_id', pharmacyId)
+
+    if (error) throw error
+  },
 }
 
 export const dashboardService = {

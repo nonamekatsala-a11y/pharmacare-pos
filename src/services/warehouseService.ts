@@ -175,7 +175,7 @@ export const warehouseService = {
       totalQuantity: items.reduce((sum, item) => sum + item.totalQuantity, 0),
       availableQuantity: items.reduce((sum, item) => sum + item.availableQuantity, 0),
       allocatedQuantity: items.reduce((sum, item) => sum + item.allocatedQuantity, 0),
-      totalValue: items.reduce((sum, item) => sum + item.purchasePrice * item.totalQuantity, 0),
+      totalValue: items.reduce((sum, item) => sum + item.purchasePrice * item.availableQuantity, 0),
       lowStockItems: items.filter((item) => item.availableQuantity <= (item.reorderLevel || 0)).length,
     }
   },

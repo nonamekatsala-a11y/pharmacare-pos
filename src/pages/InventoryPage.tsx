@@ -20,6 +20,8 @@ export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [adminSelectedPharmacy, setAdminSelectedPharmacy] = useState<Pharmacy | null>(null)
+  const [updateMedicineId, setUpdateMedicineId] = useState<string | null>(null)
+  const [updatedQuantity, setUpdatedQuantity] = useState('')
   const [deleteMedicineId, setDeleteMedicineId] = useState<string | null>(null)
 
   // Initialize pharmacy selection for both admins and pharmacists
@@ -78,6 +80,20 @@ export default function InventoryPage() {
   }
 
   const medicineToDelete = medicines.find((medicine) => medicine.id === deleteMedicineId)
+  const medicineToUpdate = medicines.find((medicine) => medicine.id === updateMedicineId)
+
+  const handleUpdateMedicine = async () => {
+    if (!updateMedicineId) return
+
+    try {
+      await medicineService.updateQuantity(updateMedicineId, Number(updatedQuantity))
+      setUpdateMedicineId(null)
+      setUpdatedQuantity('')
+      await loadInventoryData()
+    } catch (error) {
+      console.error('Failed to update medicine inventory:', error)
+    }
+  }
 
   const handleDeleteMedicine = async () => {
     if (!deleteMedicineId) return
@@ -237,7 +253,14 @@ export default function InventoryPage() {
       </div>
 
       {/* Inventory List */}
-      <InventoryList onDelete={user?.role === 'Admin' ? setDeleteMedicineId : undefined} inventory={inventory.filter(item => {
+      <InventoryList
+        onUpdate={user?.role === 'Admin' ? (medicineId) => {
+          const medicine = medicines.find((item) => item.id === medicineId)
+          setUpdateMedicineId(medicineId)
+          setUpdatedQuantity(String(medicine?.quantity || 0))
+        } : undefined}
+        onDelete={user?.role === 'Admin' ? setDeleteMedicineId : undefined}
+        inventory={inventory.filter(item => {
         const medicine = item.medicine
         if (!medicine) return false;
         if (needsReviewFilter && !(
@@ -250,7 +273,39 @@ export default function InventoryPage() {
           (medicine.genericName?.toLowerCase() || '').includes(search) ||
           (medicine.batchNumber?.toLowerCase() || '').includes(search)
         );
-      })} />
+        })}
+      />
+
+      {updateMedicineId && (
+        <Modal
+          isOpen={true}
+          title="Update Inventory Quantity"
+          onClose={() => setUpdateMedicineId(null)}
+          size="sm"
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Set the usable quantity for <strong>{medicineToUpdate?.medicineName || 'this medicine'}</strong>. Use this to remove damaged stock.
+            </p>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={updatedQuantity}
+              onChange={(event) => setUpdatedQuantity(event.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+            <div className="flex justify-end gap-3">
+              <Button type="button" variant="secondary" onClick={() => setUpdateMedicineId(null)}>
+                Cancel
+              </Button>
+              <Button type="button" variant="primary" onClick={handleUpdateMedicine}>
+                Save Quantity
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {deleteMedicineId && (
         <Modal
