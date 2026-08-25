@@ -96,21 +96,21 @@ export default function Cart({ onCheckout }: CartProps) {
       </div>
 
       {/* Totals Section - Compact */}
-      <div className="space-y-2 border-t border-primary-200 pt-3 mb-3 flex-shrink-0">
-        <div className="flex justify-between items-center text-xs">
+      <div className="space-y-1 border-t border-primary-200 pt-2 mb-2 flex-shrink-0">
+        <div className="flex justify-between items-center text-[10px]">
           <span className="text-primary-600">Subtotal:</span>
           <span className="text-primary-700">{formatCurrency(subtotal)}</span>
         </div>
-        <div className="flex justify-between items-center border-t border-primary-200 pt-2 text-xs">
+        <div className="flex justify-between items-center border-t border-primary-200 pt-1 text-[10px]">
           <span className="font-bold text-primary-700">Total:</span>
-          <span className="text-base font-bold text-primary-700">{formatCurrency(total)}</span>
+          <span className="text-sm font-bold text-primary-700">{formatCurrency(total)}</span>
         </div>
       </div>
 
       {/* Payment Section - Compact */}
-      <div className="space-y-2 border-t border-primary-200 pt-3 mb-3 flex-shrink-0">
+      <div className="space-y-1 border-t border-primary-200 pt-2 mb-2 flex-shrink-0">
         <div>
-          <label className="block text-[11px] font-semibold text-primary-700 mb-1">
+          <label className="block text-[9px] font-semibold text-primary-700 mb-0.5">
             Amount Received
           </label>
           <input
@@ -118,12 +118,12 @@ export default function Cart({ onCheckout }: CartProps) {
             value={amountReceived || ''}
             onChange={(e) => setAmountReceived(parseFloat(e.target.value) || 0)}
             placeholder="Enter amount"
-            className="w-full px-3 py-2 border border-primary-200 rounded-lg bg-primary-50 text-primary-900 text-right text-xs focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white"
+            className="w-full px-2 py-1 border border-primary-200 rounded bg-primary-50 text-primary-900 text-right text-[10px] focus:outline-none focus:ring-1 focus:ring-primary-500 focus:bg-white"
           />
         </div>
         <div>
-          <p className="text-[11px] text-primary-600 font-semibold mb-0.5">Change</p>
-          <p className="text-base font-bold text-primary-700">{formatCurrency(change)}</p>
+          <p className="text-[9px] text-primary-600 font-semibold mb-0">Change</p>
+          <p className="text-sm font-bold text-primary-700">{formatCurrency(change)}</p>
         </div>
       </div>
 
