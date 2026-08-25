@@ -175,17 +175,14 @@ export default function POSPage() {
         </div>
 
         {/* Desktop: Side-by-Side Layout */}
-        <div className="hidden lg:grid grid-cols-[minmax(500px,1.2fr)_24px_minmax(620px,1.4fr)] h-full gap-0 p-6 max-w-[1920px] mx-auto w-full">
+        <div className="hidden lg:flex h-full gap-6 p-6 max-w-[1920px] mx-auto w-full">
           {/* Left Panel: Medicine Selector */}
-          <div className="bg-white rounded-2xl border border-primary-100 p-6 overflow-y-auto min-h-0">
+          <div className="flex-1 bg-white rounded-2xl border border-primary-100 p-6 overflow-y-auto min-h-0">
             <MedicineSelector medicines={medicines} isLoading={isLoading} />
           </div>
 
-          {/* Gap */}
-          <div></div>
-
           {/* Right Panel: Cart */}
-          <div className="bg-white rounded-2xl border border-primary-100 p-6 overflow-y-auto min-h-0 flex flex-col h-[calc(100vh-7rem)]">
+          <div className="flex-1 bg-white rounded-2xl border border-primary-100 p-6 overflow-y-auto min-h-0 flex flex-col h-full max-w-md">
             <Cart onCheckout={handleCheckout} />
           </div>
         </div>
