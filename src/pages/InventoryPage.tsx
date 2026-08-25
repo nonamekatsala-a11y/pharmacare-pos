@@ -21,7 +21,7 @@ export default function InventoryPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [adminSelectedPharmacy, setAdminSelectedPharmacy] = useState<Pharmacy | null>(null)
   const [updateMedicineId, setUpdateMedicineId] = useState<string | null>(null)
-  const [updatedQuantity, setUpdatedQuantity] = useState('')
+  const [damagedQuantity, setDamagedQuantity] = useState('')
   const [deleteMedicineId, setDeleteMedicineId] = useState<string | null>(null)
 
   // Initialize pharmacy selection for both admins and pharmacists
@@ -81,14 +81,15 @@ export default function InventoryPage() {
 
   const medicineToDelete = medicines.find((medicine) => medicine.id === deleteMedicineId)
   const medicineToUpdate = medicines.find((medicine) => medicine.id === updateMedicineId)
+  const damagedMedicines = medicines.filter((medicine) => (medicine.damagedQuantity || 0) > 0)
 
   const handleUpdateMedicine = async () => {
     if (!updateMedicineId) return
 
     try {
-      await inventoryService.updateQuantity(updateMedicineId, Number(updatedQuantity))
+      await inventoryService.recordDamage(updateMedicineId, Number(damagedQuantity))
       setUpdateMedicineId(null)
-      setUpdatedQuantity('')
+      setDamagedQuantity('')
       await loadInventoryData()
     } catch (error) {
       console.error('Failed to update medicine inventory:', error)
@@ -255,9 +256,8 @@ export default function InventoryPage() {
       {/* Inventory List */}
       <InventoryList
         onUpdate={user?.role === 'Admin' ? (medicineId) => {
-          const medicine = medicines.find((item) => item.id === medicineId)
           setUpdateMedicineId(medicineId)
-          setUpdatedQuantity(String(medicine?.quantity || 0))
+          setDamagedQuantity('')
         } : undefined}
         onDelete={user?.role === 'Admin' ? setDeleteMedicineId : undefined}
         inventory={inventory.filter(item => {
@@ -276,23 +276,51 @@ export default function InventoryPage() {
         })}
       />
 
+      {damagedMedicines.length > 0 && (
+        <section className="mt-8 rounded-lg border border-red-200 bg-red-50 p-4 shadow-sm">
+          <h2 className="text-lg font-semibold text-red-800">Damaged Medicines</h2>
+          <p className="mt-1 text-sm text-red-700">These units are excluded from usable inventory and cannot be sold.</p>
+          <div className="mt-4 overflow-x-auto rounded-lg bg-white">
+            <table className="w-full">
+              <thead className="border-b border-red-100 bg-red-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-red-900">Medicine</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-red-900">Damaged Quantity</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-red-900">Good Quantity Remaining</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-red-100">
+                {damagedMedicines.map((medicine) => (
+                  <tr key={medicine.id}>
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{medicine.medicineName}</td>
+                    <td className="px-4 py-3 text-sm font-semibold text-red-700">{medicine.damagedQuantity || 0}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{medicine.quantity}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
       {updateMedicineId && (
         <Modal
           isOpen={true}
-          title="Update Inventory Quantity"
+          title="Record Damaged Medicine"
           onClose={() => setUpdateMedicineId(null)}
           size="sm"
         >
           <div className="space-y-4">
             <p className="text-sm text-gray-600">
-              Set the usable quantity for <strong>{medicineToUpdate?.medicineName || 'this medicine'}</strong>. Use this to remove damaged stock.
+              Record damaged units for <strong>{medicineToUpdate?.medicineName || 'this medicine'}</strong>. Good stock will remain available.
             </p>
             <input
               type="number"
-              min="0"
+              min="1"
               step="1"
-              value={updatedQuantity}
-              onChange={(event) => setUpdatedQuantity(event.target.value)}
+              value={damagedQuantity}
+              onChange={(event) => setDamagedQuantity(event.target.value)}
+              placeholder="Damaged quantity"
               className="w-full rounded-lg border border-gray-300 px-3 py-2"
             />
             <div className="flex justify-end gap-3">
@@ -300,7 +328,7 @@ export default function InventoryPage() {
                 Cancel
               </Button>
               <Button type="button" variant="primary" onClick={handleUpdateMedicine}>
-                Save Quantity
+                Record Damage
               </Button>
             </div>
           </div>

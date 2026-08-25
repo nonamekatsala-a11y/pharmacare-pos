@@ -31,6 +31,7 @@ export interface Medicine {
   sellingPrice: number
   taxRate: number
   quantity: number
+  damagedQuantity?: number
   reorderLevel: number
   prescriptionRequired: boolean
   status: 'Available' | 'Discontinued'
@@ -81,6 +82,7 @@ interface PharmacyInventoryRow {
   selling_price: number | null
   tax_rate: number | null
   quantity: number
+  damaged_quantity: number | null
   reorder_level: number
   prescription_required: boolean
   status: 'Available' | 'Discontinued'
@@ -121,6 +123,7 @@ const mapInventoryRow = (row: PharmacyInventoryRow): Medicine => ({
   sellingPrice: Number(row.selling_price || 0),
   taxRate: Number(row.tax_rate || 0),
   quantity: row.quantity,
+  damagedQuantity: Number(row.damaged_quantity || 0),
   reorderLevel: row.reorder_level,
   prescriptionRequired: row.prescription_required,
   status: row.status,
@@ -368,19 +371,35 @@ export const inventoryService = {
     if (updateError) throw updateError
   },
 
-  updateQuantity: async (id: string, quantity: number): Promise<void> => {
+  recordDamage: async (id: string, damagedQuantity: number): Promise<void> => {
     const { user } = useAuthStore.getState()
     if (user?.role !== 'Admin') {
-      throw new Error('Only administrators can update inventory.')
+      throw new Error('Only administrators can record damaged inventory.')
     }
-    if (!Number.isInteger(quantity) || quantity < 0) {
-      throw new Error('Inventory quantity must be a whole number of zero or more.')
+    if (!Number.isInteger(damagedQuantity) || damagedQuantity <= 0) {
+      throw new Error('Damaged quantity must be a positive whole number.')
     }
 
     const pharmacyId = getEffectivePharmacyId()
-    const { error } = await getSupabaseClient()
+    const supabase = getSupabaseClient()
+    const { data: inventory, error: fetchError } = await supabase
       .from('pharmacy_inventory')
-      .update({ quantity })
+      .select('quantity, damaged_quantity')
+      .eq('medicine_id', id)
+      .eq('pharmacy_id', pharmacyId)
+      .single()
+
+    if (fetchError) throw fetchError
+    if (damagedQuantity > inventory.quantity) {
+      throw new Error('Damaged quantity cannot exceed the available quantity.')
+    }
+
+    const { error } = await supabase
+      .from('pharmacy_inventory')
+      .update({
+        quantity: inventory.quantity - damagedQuantity,
+        damaged_quantity: Number(inventory.damaged_quantity || 0) + damagedQuantity,
+      })
       .eq('medicine_id', id)
       .eq('pharmacy_id', pharmacyId)
 
