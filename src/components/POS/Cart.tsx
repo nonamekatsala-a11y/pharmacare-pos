@@ -28,9 +28,9 @@ export default function Cart({ onCheckout }: CartProps) {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex flex-col min-h-full">
       {/* Cart Header - Compact */}
-      <div className="mb-2">
+      <div className="mb-2 flex-shrink-0">
         <h2 className="text-xl font-bold text-primary-700">Cart</h2>
         <p className="text-xs text-primary-600">
           {items.length} {items.length === 1 ? 'item' : 'items'}
@@ -38,7 +38,7 @@ export default function Cart({ onCheckout }: CartProps) {
       </div>
 
       {/* Cart Items - Large Section */}
-      <div className="flex-1 overflow-y-auto mb-4 border border-primary-100 rounded-lg bg-gray-50">
+      <div className="flex-1 overflow-y-auto mb-4 border border-primary-100 rounded-lg bg-gray-50 min-h-0">
         {items.length === 0 ? (
           <div className="flex items-center justify-center h-full text-center p-4">
             <div>
@@ -96,7 +96,7 @@ export default function Cart({ onCheckout }: CartProps) {
       </div>
 
       {/* Totals Section - Compact */}
-      <div className="space-y-2 border-t border-primary-200 pt-3 mb-3">
+      <div className="space-y-2 border-t border-primary-200 pt-3 mb-3 flex-shrink-0">
         <div className="flex justify-between items-center text-xs">
           <span className="text-primary-600">Subtotal:</span>
           <span className="text-primary-700">{formatCurrency(subtotal)}</span>
@@ -108,7 +108,7 @@ export default function Cart({ onCheckout }: CartProps) {
       </div>
 
       {/* Payment Section - Compact */}
-      <div className="space-y-2 border-t border-primary-200 pt-3 mb-3">
+      <div className="space-y-2 border-t border-primary-200 pt-3 mb-3 flex-shrink-0">
         <div>
           <label className="block text-[11px] font-semibold text-primary-700 mb-1">
             Amount Received
@@ -128,7 +128,7 @@ export default function Cart({ onCheckout }: CartProps) {
       </div>
 
       {/* Action Buttons */}
-      <div className="space-y-2">
+      <div className="space-y-2 flex-shrink-0">
         <button
           onClick={() => onCheckout(amountReceived)}
           disabled={items.length === 0 || amountReceived < total}
