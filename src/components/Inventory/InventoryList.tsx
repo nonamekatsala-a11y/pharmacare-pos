@@ -35,18 +35,24 @@ export default function InventoryList({ inventory, onUpdate, onDelete }: Invento
             inventory.map((item) => {
               const daysLeft = item.expiryDate ? daysUntilExpiry(item.expiryDate) : null
               const expired = item.expiryDate ? isExpired(item.expiryDate) : false
+              const isLowStock = item.medicine?.quantity <= item.medicine?.reorderLevel
 
               return (
-                <tr key={item.id} className="border-b border-gray-200 hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                <tr
+                  key={item.id}
+                  className={`border-b hover:bg-gray-50 ${
+                    isLowStock ? 'bg-red-50 hover:bg-red-100' : 'border-gray-200'
+                  }`}
+                >
+                  <td className={`px-6 py-4 text-sm font-medium ${isLowStock ? 'text-red-900' : 'text-gray-900'}`}>
                     {item.medicine?.medicineName || 'Unknown'}
                   </td>
                   <td className="px-6 py-4 text-sm">
                     <div className="flex flex-col gap-1">
                       <span
                         className={`inline-block rounded px-2 py-1 text-xs font-medium ${
-                          item.quantityOnHand <= 5
-                            ? 'bg-red-100 text-red-800'
+                          isLowStock
+                            ? 'bg-red-200 text-red-900'
                             : 'bg-green-100 text-green-800'
                         }`}
                       >
@@ -59,13 +65,13 @@ export default function InventoryList({ inventory, onUpdate, onDelete }: Invento
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
+                  <td className={`px-6 py-4 text-sm ${isLowStock ? 'text-red-700' : 'text-gray-600'}`}>
                     {formatCurrency(item.unitCost)}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
+                  <td className={`px-6 py-4 text-sm ${isLowStock ? 'text-red-700' : 'text-gray-600'}`}>
                     {item.medicine?.sellingPrice ? formatCurrency(item.medicine.sellingPrice) : '-'}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
+                  <td className={`px-6 py-4 text-sm ${isLowStock ? 'text-red-700' : 'text-gray-600'}`}>
                     {item.medicine?.sellingPrice
                       ? formatCurrency((item.medicine.sellingPrice - item.unitCost) * item.quantityOnHand)
                       : '-'}
