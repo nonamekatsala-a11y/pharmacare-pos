@@ -26,6 +26,7 @@ BEGIN
     'warehouse_allocations',
     'warehouse_items',
     'pharmacy_inventory',
+    'pharmacy_inventory_damage',
     'medicines',
     'expenses',
     'customers',

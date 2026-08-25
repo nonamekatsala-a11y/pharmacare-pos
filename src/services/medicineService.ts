@@ -82,7 +82,6 @@ interface PharmacyInventoryRow {
   selling_price: number | null
   tax_rate: number | null
   quantity: number
-  damaged_quantity: number | null
   reorder_level: number
   prescription_required: boolean
   status: 'Available' | 'Discontinued'
@@ -123,7 +122,7 @@ const mapInventoryRow = (row: PharmacyInventoryRow): Medicine => ({
   sellingPrice: Number(row.selling_price || 0),
   taxRate: Number(row.tax_rate || 0),
   quantity: row.quantity,
-  damagedQuantity: Number(row.damaged_quantity || 0),
+  damagedQuantity: 0,
   reorderLevel: row.reorder_level,
   prescriptionRequired: row.prescription_required,
   status: row.status,
@@ -144,6 +143,19 @@ export const medicineService = {
 
     if (error) throw error
     const pharmacyInventory = (data as PharmacyInventoryRow[]).map(mapInventoryRow)
+
+    const { data: damageRows, error: damageError } = await supabase
+      .from('pharmacy_inventory_damage')
+      .select('medicine_id, damaged_quantity')
+      .eq('pharmacy_id', pharmacyId)
+
+    if (damageError) throw damageError
+    const damageByMedicine = new Map(
+      (damageRows || []).map((row) => [row.medicine_id, Number(row.damaged_quantity || 0)]),
+    )
+    pharmacyInventory.forEach((medicine) => {
+      medicine.damagedQuantity = damageByMedicine.get(medicine.id) || 0
+    })
     
     // Add allocations as informational data (display only)
     // This includes both pending/approved allocations and completed ones that might not be in pharmacy_inventory yet
@@ -381,29 +393,13 @@ export const inventoryService = {
     }
 
     const pharmacyId = getEffectivePharmacyId()
-    const supabase = getSupabaseClient()
-    const { data: inventory, error: fetchError } = await supabase
-      .from('pharmacy_inventory')
-      .select('quantity, damaged_quantity')
-      .eq('medicine_id', id)
-      .eq('pharmacy_id', pharmacyId)
-      .single()
+    const { error } = await getSupabaseClient().rpc('record_inventory_damage', {
+      target_medicine_id: id,
+      target_pharmacy_id: pharmacyId,
+      target_damaged_quantity: damagedQuantity,
+    })
 
-    if (fetchError) throw fetchError
-    if (damagedQuantity > inventory.quantity) {
-      throw new Error('Damaged quantity cannot exceed the available quantity.')
-    }
-
-    const { error } = await supabase
-      .from('pharmacy_inventory')
-      .update({
-        quantity: inventory.quantity - damagedQuantity,
-        damaged_quantity: Number(inventory.damaged_quantity || 0) + damagedQuantity,
-      })
-      .eq('medicine_id', id)
-      .eq('pharmacy_id', pharmacyId)
-
-    if (error) throw error
+    if (error) throw new Error(error.message)
   },
 }
 
