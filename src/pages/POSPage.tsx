@@ -182,7 +182,7 @@ export default function POSPage() {
           </div>
 
           {/* Right Panel: Cart */}
-          <div className="w-[450px] bg-white rounded-2xl border border-primary-100 p-6 overflow-y-auto flex flex-col h-full flex-shrink-0 min-h-[600px]">
+          <div className="w-[450px] bg-white rounded-2xl border border-primary-100 p-6 overflow-y-auto flex flex-col h-full flex-shrink-0 min-h-[700px]">
             <Cart onCheckout={handleCheckout} />
           </div>
         </div>
