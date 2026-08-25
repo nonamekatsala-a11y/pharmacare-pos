@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { medicineService, inventoryService, Medicine, setAdminPharmacyOverride } from '@services/medicineService'
 import { useAuthStore } from '@store/authStore'
 import InventoryList from '@components/Inventory/InventoryList'
@@ -14,6 +14,7 @@ import Button from '@components/Common/Button'
 
 export default function InventoryPage() {
   const { user, selectedPharmacy } = useAuthStore()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [inventory, setInventory] = useState<InventoryItem[]>([])
   const [medicines, setMedicines] = useState<Medicine[]>([])
@@ -50,6 +51,7 @@ export default function InventoryPage() {
   // Get current pharmacy info
   const currentPharmacy = adminSelectedPharmacy || selectedPharmacy || PHARMACIES.find(p => p.id === user?.pharmacyId)
   const needsReviewFilter = searchParams.get('filter') === 'needs-review'
+  const lowStockFilter = searchParams.get('filter') === 'low-stock'
 
   useEffect(() => {
     loadInventoryData()
@@ -239,6 +241,24 @@ export default function InventoryPage() {
 
       {/* Search Section */}
       <div className="mb-6">
+        {(needsReviewFilter || lowStockFilter) && (
+          <div className="mb-4 flex items-center justify-between bg-amber-50 border border-amber-200 rounded-lg px-4 py-2">
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              <span className="text-sm font-medium text-amber-800">
+                {needsReviewFilter ? 'Showing items that need review (low stock or expired)' : 'Showing low stock items only'}
+              </span>
+            </div>
+            <button
+              onClick={() => navigate('/inventory')}
+              className="text-sm text-amber-700 hover:text-amber-900 font-medium"
+            >
+              Clear Filter
+            </button>
+          </div>
+        )}
         <div className="relative">
           <svg className="absolute left-3 top-3 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -266,6 +286,9 @@ export default function InventoryPage() {
         if (needsReviewFilter && !(
           medicine.quantity <= medicine.reorderLevel ||
           (medicine.expiryDate ? isExpired(medicine.expiryDate) : false)
+        )) return false
+        if (lowStockFilter && !(
+          medicine.quantity <= medicine.reorderLevel
         )) return false
         const search = searchTerm.toLowerCase();
         return (

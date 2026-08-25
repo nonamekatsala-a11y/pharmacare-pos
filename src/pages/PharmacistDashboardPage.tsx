@@ -300,7 +300,7 @@ export default function PharmacistDashboardPage() {
         </button>
 
         <button
-          onClick={() => navigate('/inventory')}
+          onClick={() => navigate('/inventory?filter=low-stock')}
           className="rounded-2xl border border-gray-200 bg-red-50 p-4 md:p-6 text-left shadow-sm transition hover:shadow-md"
         >
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Low Stock</p>
