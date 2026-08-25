@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { medicineService, Medicine, setAdminPharmacyOverride } from '@services/medicineService'
+import { medicineService, inventoryService, Medicine, setAdminPharmacyOverride } from '@services/medicineService'
 import { useAuthStore } from '@store/authStore'
 import InventoryList from '@components/Inventory/InventoryList'
 import { InventoryItem } from '@services/medicineService'
@@ -86,7 +86,7 @@ export default function InventoryPage() {
     if (!updateMedicineId) return
 
     try {
-      await medicineService.updateQuantity(updateMedicineId, Number(updatedQuantity))
+      await inventoryService.updateQuantity(updateMedicineId, Number(updatedQuantity))
       setUpdateMedicineId(null)
       setUpdatedQuantity('')
       await loadInventoryData()
