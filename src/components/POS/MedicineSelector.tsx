@@ -73,9 +73,9 @@ export default function MedicineSelector({ medicines, isLoading }: MedicineSelec
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="mb-3">
-        <h2 className="text-lg font-bold text-primary-700">Sell Medicine</h2>
-        <p className="text-xs text-primary-600 mt-0.5">Add items to the cart and complete the sale.</p>
+      <div className="mb-2">
+        <h2 className="text-base font-bold text-primary-700">Sell Medicine</h2>
+        <p className="text-[10px] text-primary-600 mt-0">Add items to the cart and complete the sale.</p>
       </div>
 
       {/* Loading State */}
@@ -89,8 +89,8 @@ export default function MedicineSelector({ medicines, isLoading }: MedicineSelec
       ) : (
         <>
           {/* Medicine Search */}
-          <div className="mb-3">
-            <label className="block text-xs font-semibold text-primary-700 mb-1">
+          <div className="mb-2">
+            <label className="block text-[10px] font-semibold text-primary-700 mb-0.5">
               Search Medicine
             </label>
             <div className="relative">
@@ -100,15 +100,15 @@ export default function MedicineSelector({ medicines, isLoading }: MedicineSelec
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
                 placeholder="Search by name, barcode, or generic name..."
-                className="w-full px-3 py-1.5 border border-primary-200 rounded-lg bg-primary-50 text-primary-900 placeholder-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white transition-colors text-sm"
+                className="w-full px-2 py-1 border border-primary-200 rounded-lg bg-primary-50 text-primary-900 placeholder-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white transition-colors text-xs"
               />
             </div>
 
             {/* Dropdown Results */}
             {searchTerm && (
-              <div className="mt-1 bg-white border border-primary-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+              <div className="mt-1 bg-white border border-primary-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
                 {filteredMedicines.length === 0 ? (
-                  <div className="p-3 text-center text-primary-600 text-xs">
+                  <div className="p-2 text-center text-primary-600 text-[10px]">
                     {medicines.length === 0 ? 'No stock is available for this pharmacy' : 'No non-expired medicine found'}
                   </div>
                 ) : (
@@ -117,10 +117,10 @@ export default function MedicineSelector({ medicines, isLoading }: MedicineSelec
                       <button
                         key={medicine.id}
                         onClick={() => handleSelectMedicine(medicine)}
-                        className="w-full px-3 py-2 text-left hover:bg-primary-50 transition-colors"
+                        className="w-full px-2 py-1.5 text-left hover:bg-primary-50 transition-colors"
                       >
-                        <div className="font-semibold text-primary-700 text-xs">{medicine.medicineName}</div>
-                        <div className="text-[10px] text-primary-600 mt-0.5">
+                        <div className="font-semibold text-primary-700 text-[10px]">{medicine.medicineName}</div>
+                        <div className="text-[9px] text-primary-600 mt-0">
                           {medicine.genericName && <span>{medicine.genericName} • </span>}
                           <span>Stock: {medicine.quantity}</span>
                         </div>
@@ -134,31 +134,31 @@ export default function MedicineSelector({ medicines, isLoading }: MedicineSelec
 
           {/* Selected Medicine Details */}
           {selectedMedicine ? (
-            <div className="flex-1 flex flex-col space-y-2">
+            <div className="flex-1 flex flex-col space-y-1.5">
               {/* Medicine Info Card */}
-              <div className="bg-primary-50 rounded-lg p-3 border border-primary-200">
-                <h3 className="font-bold text-primary-700 text-sm mb-2">{selectedMedicine.medicineName}</h3>
+              <div className="bg-primary-50 rounded-lg p-2 border border-primary-200">
+                <h3 className="font-bold text-primary-700 text-xs mb-1">{selectedMedicine.medicineName}</h3>
 
                 {/* Details Grid */}
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {selectedMedicine.genericName && (
                     <div>
-                      <p className="text-[10px] text-primary-600 font-semibold">Generic Name</p>
-                      <p className="text-xs text-primary-700">{selectedMedicine.genericName}</p>
+                      <p className="text-[9px] text-primary-600 font-semibold">Generic Name</p>
+                      <p className="text-[10px] text-primary-700">{selectedMedicine.genericName}</p>
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-1.5">
                     <div>
-                      <p className="text-[10px] text-primary-600 font-semibold">Price</p>
-                      <p className="text-sm font-bold text-primary-700">
+                      <p className="text-[9px] text-primary-600 font-semibold">Price</p>
+                      <p className="text-xs font-bold text-primary-700">
                         {formatCurrency(selectedMedicine.sellingPrice)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-primary-600 font-semibold">Stock</p>
+                      <p className="text-[9px] text-primary-600 font-semibold">Stock</p>
                       <p
-                        className={`text-sm font-bold ${selectedMedicine.quantity > selectedMedicine.reorderLevel ? 'text-green-600' : 'text-red-600'}`}
+                        className={`text-xs font-bold ${selectedMedicine.quantity > selectedMedicine.reorderLevel ? 'text-green-600' : 'text-red-600'}`}
                       >
                         {selectedMedicine.quantity}
                       </p>
@@ -167,23 +167,23 @@ export default function MedicineSelector({ medicines, isLoading }: MedicineSelec
 
                   {selectedMedicine.category && (
                     <div>
-                      <p className="text-[10px] text-primary-600 font-semibold">Category</p>
-                      <p className="text-xs text-primary-700">{selectedMedicine.category}</p>
+                      <p className="text-[9px] text-primary-600 font-semibold">Category</p>
+                      <p className="text-[10px] text-primary-700">{selectedMedicine.category}</p>
                     </div>
                   )}
 
                   {selectedMedicine.expiryDate && (
                     <div>
-                      <p className="text-[10px] text-primary-600 font-semibold">Expiry Date</p>
-                      <p className="text-xs text-primary-700">
+                      <p className="text-[9px] text-primary-600 font-semibold">Expiry Date</p>
+                      <p className="text-[10px] text-primary-700">
                         {new Date(selectedMedicine.expiryDate).toLocaleDateString()}
                       </p>
                     </div>
                   )}
 
-                  <div className="border-t border-primary-200 pt-2">
-                    <p className="text-[10px] text-primary-600 font-semibold">Barcode</p>
-                    <p className="text-[10px] text-primary-700 font-mono">{selectedMedicine.barcode}</p>
+                  <div className="border-t border-primary-200 pt-1.5">
+                    <p className="text-[9px] text-primary-600 font-semibold">Barcode</p>
+                    <p className="text-[9px] text-primary-700 font-mono">{selectedMedicine.barcode}</p>
                   </div>
                 </div>
               </div>
@@ -198,11 +198,11 @@ export default function MedicineSelector({ medicines, isLoading }: MedicineSelec
               />
 
               {/* Action Buttons */}
-              <div className="space-y-1.5 mt-auto">
+              <div className="space-y-1 mt-auto">
                 <button
                   onClick={handleAddToCart}
                   disabled={!canAddToCart}
-                  className="w-full bg-primary-500 text-white font-semibold py-2 rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+                  className="w-full bg-primary-500 text-white font-semibold py-1.5 rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs"
                 >
                   Add to Cart
                 </button>
@@ -212,7 +212,7 @@ export default function MedicineSelector({ medicines, isLoading }: MedicineSelec
                     setSearchTerm('')
                     setQuantity(1)
                   }}
-                  className="w-full border border-primary-300 text-primary-700 font-semibold py-1.5 rounded-lg hover:bg-primary-50 transition-colors text-sm"
+                  className="w-full border border-primary-300 text-primary-700 font-semibold py-1 rounded-lg hover:bg-primary-50 transition-colors text-xs"
                 >
                   Clear Selection
                 </button>
