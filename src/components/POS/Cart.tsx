@@ -66,9 +66,6 @@ export default function Cart({ onCheckout }: CartProps) {
                     <p className="font-semibold text-primary-700 text-[7px] truncate">
                       {item.medicineName}
                     </p>
-                    <p className="text-[6px] text-primary-600 mt-0">
-                      <span className="font-mono">{item.barcode}</span>
-                    </p>
                   </div>
                   <button
                     onClick={() => handleRemove(item.medicineId)}
