@@ -98,7 +98,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     <>
       {/* Desktop Sidebar */}
       <aside className={`hidden md:flex border-r border-primary-600 bg-primary-500 text-white flex-col transition-all duration-300 h-screen ${
-        isCollapsed ? 'w-16' : 'w-40'
+        isCollapsed ? 'w-20' : 'w-64'
       }`}>
         <div className="flex h-full flex-col">
           {/* Hamburger Button Section */}
@@ -168,7 +168,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Mobile Sidebar */}
       <aside
-        className={`fixed left-0 top-0 z-40 h-screen w-40 border-r border-primary-600 bg-primary-500 text-white transition-transform duration-300 md:hidden flex flex-col ${
+        className={`fixed left-0 top-0 z-40 h-screen w-64 border-r border-primary-600 bg-primary-500 text-white transition-transform duration-300 md:hidden flex flex-col ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
