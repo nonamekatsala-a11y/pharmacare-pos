@@ -265,10 +265,10 @@ export default function SalesPage() {
           <MonthlySales monthlySales={monthlySales} />
         </div>
 
-        {/* Right Column - Sales by Medicine and Recent Sales */}
+        {/* Right Column - Recent Sales and Sales by Medicine */}
         <div className="lg:col-span-3 space-y-6">
-          <SalesByMedicine salesByMedicine={salesByMedicine} onEdit={canEditSales ? handleEditSale : undefined} />
           <RecentSales recentSales={recentSales} onEdit={canEditSales ? handleEditSale : undefined} />
+          <SalesByMedicine salesByMedicine={salesByMedicine} onEdit={canEditSales ? handleEditSale : undefined} />
         </div>
       </div>
 
