@@ -10,7 +10,7 @@ interface InventoryListProps {
 
 export default function InventoryList({ inventory, onUpdate, onDelete, userRole }: InventoryListProps) {
   const isAdmin = userRole === 'Admin'
-  const columnCount = isAdmin ? 6 : 4
+  const columnCount = isAdmin ? 6 : 5
   const colspan = (onUpdate || onDelete) ? columnCount + 1 : columnCount
 
   return (
@@ -21,11 +21,11 @@ export default function InventoryList({ inventory, onUpdate, onDelete, userRole 
             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Medicine</th>
             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Qty</th>
             {isAdmin && (
-              <>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Order Price</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Selling Price</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Profit</th>
-              </>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Order Price</th>
+            )}
+            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Selling Price</th>
+            {isAdmin && (
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Profit</th>
             )}
             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Expiry Date</th>
             {(onUpdate || onDelete) && (
@@ -75,19 +75,19 @@ export default function InventoryList({ inventory, onUpdate, onDelete, userRole 
                     </div>
                   </td>
                   {isAdmin && (
-                    <>
-                      <td className={`px-6 py-4 text-sm ${isLowStock ? 'text-red-700' : 'text-gray-600'}`}>
-                        {formatCurrency(item.unitCost)}
-                      </td>
-                      <td className={`px-6 py-4 text-sm ${isLowStock ? 'text-red-700' : 'text-gray-600'}`}>
-                        {item.medicine?.sellingPrice ? formatCurrency(item.medicine.sellingPrice) : '-'}
-                      </td>
-                      <td className={`px-6 py-4 text-sm ${isLowStock ? 'text-red-700' : 'text-gray-600'}`}>
-                        {item.medicine?.sellingPrice
-                          ? formatCurrency((item.medicine.sellingPrice - item.unitCost) * item.quantityOnHand)
-                          : '-'}
-                      </td>
-                    </>
+                    <td className={`px-6 py-4 text-sm ${isLowStock ? 'text-red-700' : 'text-gray-600'}`}>
+                      {formatCurrency(item.unitCost)}
+                    </td>
+                  )}
+                  <td className={`px-6 py-4 text-sm ${isLowStock ? 'text-red-700' : 'text-gray-600'}`}>
+                    {item.medicine?.sellingPrice ? formatCurrency(item.medicine.sellingPrice) : '-'}
+                  </td>
+                  {isAdmin && (
+                    <td className={`px-6 py-4 text-sm ${isLowStock ? 'text-red-700' : 'text-gray-600'}`}>
+                      {item.medicine?.sellingPrice
+                        ? formatCurrency((item.medicine.sellingPrice - item.unitCost) * item.quantityOnHand)
+                        : '-'}
+                    </td>
                   )}
                   <td className="px-6 py-4 text-sm">
                     {item.expiryDate ? (
