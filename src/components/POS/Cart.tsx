@@ -59,41 +59,41 @@ export default function Cart({ onCheckout }: CartProps) {
         ) : (
           <div className="divide-y divide-primary-100">
             {items.map((item) => (
-              <div key={item.medicineId} className="p-1.5 hover:bg-primary-50 transition-colors">
+              <div key={item.medicineId} className="p-1 hover:bg-primary-50 transition-colors">
                 {/* Item Name */}
-                <div className="flex justify-between items-start mb-0.5">
+                <div className="flex justify-between items-start mb-0">
                   <div className="flex-1">
-                    <p className="font-semibold text-primary-700 text-xs truncate">
+                    <p className="font-semibold text-primary-700 text-[10px] truncate">
                       {item.medicineName}
                     </p>
                   </div>
                   <button
                     onClick={() => handleRemove(item.medicineId)}
-                    className="text-red-500 hover:text-red-700 hover:bg-red-50 w-4 h-4 flex items-center justify-center rounded text-[10px] font-bold transition-colors flex-shrink-0"
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50 w-3.5 h-3.5 flex items-center justify-center rounded text-[9px] font-bold transition-colors flex-shrink-0"
                   >
                     ×
                   </button>
                 </div>
 
                 {/* Item Details Grid - Compact */}
-                <div className="grid grid-cols-3 gap-1 text-[10px]">
+                <div className="grid grid-cols-3 gap-0.5 text-[9px]">
                   <div>
-                    <p className="text-primary-500 font-semibold text-[10px]">Qty</p>
+                    <p className="text-primary-500 font-semibold text-[9px]">Qty</p>
                     <input
                       type="number"
                       value={item.quantity}
                       onChange={(e) => handleQuantityChange(item.medicineId, parseInt(e.target.value) || 0)}
                       min="1"
-                      className="w-full mt-0.5 px-1 py-0.5 border border-primary-200 rounded bg-white text-primary-700 text-[10px] focus:outline-none focus:ring-1 focus:ring-primary-500"
+                      className="w-full mt-0 px-0.5 py-0 border border-primary-200 rounded bg-white text-primary-700 text-[9px] focus:outline-none focus:ring-1 focus:ring-primary-500"
                     />
                   </div>
                   <div>
-                    <p className="text-primary-500 font-semibold text-[10px]">Price</p>
-                    <p className="mt-0.5 text-[10px] text-primary-700">{formatCurrency(item.unitPrice)}</p>
+                    <p className="text-primary-500 font-semibold text-[9px]">Price</p>
+                    <p className="mt-0 text-[9px] text-primary-700">{formatCurrency(item.unitPrice)}</p>
                   </div>
                   <div>
-                    <p className="text-primary-500 font-semibold text-[10px]">Total</p>
-                    <p className="mt-0.5 font-bold text-primary-700 text-[10px]">{formatCurrency(item.total)}</p>
+                    <p className="text-primary-500 font-semibold text-[9px]">Total</p>
+                    <p className="mt-0 font-bold text-primary-700 text-[9px]">{formatCurrency(item.total)}</p>
                   </div>
                 </div>
               </div>
