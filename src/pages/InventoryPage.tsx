@@ -292,6 +292,7 @@ export default function InventoryPage() {
           setDamagedQuantity('')
         } : undefined}
         onDelete={user?.role === 'Admin' ? setDeleteMedicineId : undefined}
+        userRole={user?.role}
         inventory={inventory.filter(item => {
         const medicine = item.medicine
         if (!medicine) return false;

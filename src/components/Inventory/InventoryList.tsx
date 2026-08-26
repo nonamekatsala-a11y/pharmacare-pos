@@ -5,9 +5,14 @@ interface InventoryListProps {
   inventory: InventoryItem[]
   onUpdate?: (medicineId: string) => void
   onDelete?: (medicineId: string) => void
+  userRole?: string
 }
 
-export default function InventoryList({ inventory, onUpdate, onDelete }: InventoryListProps) {
+export default function InventoryList({ inventory, onUpdate, onDelete, userRole }: InventoryListProps) {
+  const isAdmin = userRole === 'Admin'
+  const columnCount = isAdmin ? 6 : 4
+  const colspan = (onUpdate || onDelete) ? columnCount + 1 : columnCount
+
   return (
     <div className="rounded-lg bg-white shadow-sm overflow-x-auto">
       <table className="w-full">
@@ -15,9 +20,13 @@ export default function InventoryList({ inventory, onUpdate, onDelete }: Invento
           <tr className="border-b border-gray-200 bg-gray-50">
             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Medicine</th>
             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Qty</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Order Price</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Selling Price</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Profit</th>
+            {isAdmin && (
+              <>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Order Price</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Selling Price</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Profit</th>
+              </>
+            )}
             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Expiry Date</th>
             {(onUpdate || onDelete) && (
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
@@ -27,7 +36,7 @@ export default function InventoryList({ inventory, onUpdate, onDelete }: Invento
         <tbody>
           {inventory.length === 0 ? (
             <tr>
-              <td colSpan={onUpdate || onDelete ? 7 : 6} className="px-6 py-8 text-center text-gray-500">
+              <td colSpan={colspan} className="px-6 py-8 text-center text-gray-500">
                 No inventory items found
               </td>
             </tr>
@@ -65,17 +74,21 @@ export default function InventoryList({ inventory, onUpdate, onDelete }: Invento
                       )}
                     </div>
                   </td>
-                  <td className={`px-6 py-4 text-sm ${isLowStock ? 'text-red-700' : 'text-gray-600'}`}>
-                    {formatCurrency(item.unitCost)}
-                  </td>
-                  <td className={`px-6 py-4 text-sm ${isLowStock ? 'text-red-700' : 'text-gray-600'}`}>
-                    {item.medicine?.sellingPrice ? formatCurrency(item.medicine.sellingPrice) : '-'}
-                  </td>
-                  <td className={`px-6 py-4 text-sm ${isLowStock ? 'text-red-700' : 'text-gray-600'}`}>
-                    {item.medicine?.sellingPrice
-                      ? formatCurrency((item.medicine.sellingPrice - item.unitCost) * item.quantityOnHand)
-                      : '-'}
-                  </td>
+                  {isAdmin && (
+                    <>
+                      <td className={`px-6 py-4 text-sm ${isLowStock ? 'text-red-700' : 'text-gray-600'}`}>
+                        {formatCurrency(item.unitCost)}
+                      </td>
+                      <td className={`px-6 py-4 text-sm ${isLowStock ? 'text-red-700' : 'text-gray-600'}`}>
+                        {item.medicine?.sellingPrice ? formatCurrency(item.medicine.sellingPrice) : '-'}
+                      </td>
+                      <td className={`px-6 py-4 text-sm ${isLowStock ? 'text-red-700' : 'text-gray-600'}`}>
+                        {item.medicine?.sellingPrice
+                          ? formatCurrency((item.medicine.sellingPrice - item.unitCost) * item.quantityOnHand)
+                          : '-'}
+                      </td>
+                    </>
+                  )}
                   <td className="px-6 py-4 text-sm">
                     {item.expiryDate ? (
                       <span
