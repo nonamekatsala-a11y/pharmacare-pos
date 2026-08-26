@@ -219,11 +219,7 @@ export default function MedicineSelector({ medicines, isLoading }: MedicineSelec
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-center">
-              <div>
-                <p className="text-primary-600 text-sm">Search and select a medicine to continue</p>
-              </div>
-            </div>
+            <div className="flex-1"></div>
           )}
         </>
       )}
