@@ -48,7 +48,7 @@ export default function Cart({ onCheckout }: CartProps) {
       </div>
 
       {/* Cart Items - Large Section */}
-      <div className="flex-1 overflow-y-auto mb-2 border border-primary-100 rounded-lg bg-gray-50 min-h-0">
+      <div className="flex-1 overflow-y-auto mb-4 border border-primary-100 rounded-lg bg-gray-50 min-h-0">
         {items.length === 0 ? (
           <div className="flex items-center justify-center h-full text-center p-4">
             <div>
@@ -59,41 +59,41 @@ export default function Cart({ onCheckout }: CartProps) {
         ) : (
           <div className="divide-y divide-primary-100">
             {items.map((item) => (
-              <div key={item.medicineId} className="p-1 hover:bg-primary-50 transition-colors">
+              <div key={item.medicineId} className="p-2 hover:bg-primary-50 transition-colors">
                 {/* Item Name */}
-                <div className="flex justify-between items-start mb-0">
+                <div className="flex justify-between items-start mb-1">
                   <div className="flex-1">
-                    <p className="font-semibold text-primary-700 text-[7px] truncate">
+                    <p className="font-semibold text-primary-700 text-sm truncate">
                       {item.medicineName}
                     </p>
                   </div>
                   <button
                     onClick={() => handleRemove(item.medicineId)}
-                    className="text-red-500 hover:text-red-700 hover:bg-red-50 w-3 h-3 flex items-center justify-center rounded text-[7px] font-bold transition-colors flex-shrink-0"
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50 w-5 h-5 flex items-center justify-center rounded text-xs font-bold transition-colors flex-shrink-0"
                   >
                     ×
                   </button>
                 </div>
 
                 {/* Item Details Grid - Compact */}
-                <div className="grid grid-cols-3 gap-0 text-[6px]">
+                <div className="grid grid-cols-3 gap-2 text-xs">
                   <div>
-                    <p className="text-primary-500 font-semibold text-[6px]">Qty</p>
+                    <p className="text-primary-500 font-semibold text-xs">Qty</p>
                     <input
                       type="number"
                       value={item.quantity}
                       onChange={(e) => handleQuantityChange(item.medicineId, parseInt(e.target.value) || 0)}
                       min="1"
-                      className="w-full mt-0 px-0 py-0 border border-primary-200 rounded bg-white text-primary-700 text-[6px] focus:outline-none focus:ring-1 focus:ring-primary-500"
+                      className="w-full mt-1 px-2 py-1 border border-primary-200 rounded bg-white text-primary-700 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500"
                     />
                   </div>
                   <div>
-                    <p className="text-primary-500 font-semibold text-[6px]">Price</p>
-                    <p className="mt-0 text-[6px] text-primary-700">{formatCurrency(item.unitPrice)}</p>
+                    <p className="text-primary-500 font-semibold text-xs">Price</p>
+                    <p className="mt-1 text-xs text-primary-700">{formatCurrency(item.unitPrice)}</p>
                   </div>
                   <div>
-                    <p className="text-primary-500 font-semibold text-[6px]">Total</p>
-                    <p className="mt-0 font-bold text-primary-700 text-[6px]">{formatCurrency(item.total)}</p>
+                    <p className="text-primary-500 font-semibold text-xs">Total</p>
+                    <p className="mt-1 font-bold text-primary-700 text-xs">{formatCurrency(item.total)}</p>
                   </div>
                 </div>
               </div>
