@@ -25,14 +25,15 @@ BEGIN
     RAISE EXCEPTION 'User not authenticated';
   END IF;
 
-  -- Get user role and active status
-  SELECT role, is_active INTO user_role, user_is_active
-  FROM profiles
-  WHERE id = current_user_id;
-
-  -- Check if user is an active administrator
-  IF user_role != 'Admin' OR user_is_active != true THEN
-    RAISE EXCEPTION 'Only active administrators can create user profiles. Current role: %, Active: %', user_role, user_is_active;
+  -- Ensure the caller is an active administrator
+  IF NOT EXISTS (
+    SELECT 1
+    FROM profiles
+    WHERE id = current_user_id
+      AND role = 'Admin'
+      AND is_active = true
+  ) THEN
+    RAISE EXCEPTION 'Only active administrators can create user profiles';
   END IF;
 
   IF target_role NOT IN ('Admin', 'Pharmacist') THEN
