@@ -138,7 +138,24 @@ export default function UsersPage() {
         target_full_name: fullName,
         target_pharmacy_id: formData.pharmacyId,
       })
-      if (createError) throw createError
+      if (createError) {
+        if (createError.code !== '42883') throw createError
+
+        const { error: profileError } = await supabase.rpc('admin_update_user', {
+          target_user_id: data.user.id,
+          target_user_name: userName,
+          target_full_name: fullName,
+          target_role: 'Pharmacist',
+          target_is_active: true,
+        })
+        if (profileError) throw profileError
+
+        const { error: membershipError } = await supabase.rpc('reassign_pharmacist', {
+          target_user_id: data.user.id,
+          target_pharmacy_id: formData.pharmacyId,
+        })
+        if (membershipError) throw membershipError
+      }
 
       setSuccessMessage('Pharmacist account created successfully.')
       await loadUsers()
