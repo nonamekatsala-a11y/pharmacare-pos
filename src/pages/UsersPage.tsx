@@ -122,6 +122,10 @@ export default function UsersPage() {
           throw new Error(authError.message || 'Failed to create user')
         }
 
+        if (!authData.user) {
+          throw new Error('Failed to create user: No user data returned')
+        }
+
         // Assign pharmacy for pharmacists
         if (formData.role === 'Pharmacist' && formData.pharmacyId) {
           const { error: membershipError } = await getSupabaseClient().rpc('reassign_pharmacist', {
