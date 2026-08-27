@@ -35,9 +35,12 @@ BEGIN
     RAISE EXCEPTION 'Only active administrators can create user profiles. Current role: %, Active: %', user_role, user_is_active;
   END IF;
 
-  IF target_role NOT IN ('Admin', 'Cashier', 'Pharmacist') THEN
-    RAISE EXCEPTION 'Invalid user role';
+  IF target_role NOT IN ('Admin', 'Pharmacist') THEN
+    RAISE EXCEPTION 'Invalid user role: %', target_role;
   END IF;
+
+  -- First, delete any existing profile for this user (in case Supabase auto-created one)
+  DELETE FROM profiles WHERE id = target_user_id;
 
   INSERT INTO profiles (id, user_name, full_name, role, is_active, email, created_at, updated_at)
   VALUES (target_user_id, target_user_name, target_full_name, target_role, true, target_email, now(), now());
