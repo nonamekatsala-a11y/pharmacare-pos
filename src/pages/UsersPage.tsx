@@ -128,33 +128,46 @@ export default function UsersPage() {
         password,
         options: { data: { full_name: fullName, user_name: userName } },
       })
-      if (error) throw error
-      if (!data.user) throw new Error('The pharmacist account could not be created.')
+      if (error) {
+        if (!error.message.toLowerCase().includes('already registered')) throw error
 
-      const { error: createError } = await supabase.rpc('create_pharmacist', {
-        target_user_id: data.user.id,
-        target_email: email,
-        target_user_name: userName,
-        target_full_name: fullName,
-        target_pharmacy_id: formData.pharmacyId,
-      })
-      if (createError) {
-        if (!['42883', 'PGRST202'].includes(createError.code || '')) throw createError
-
-        const { error: profileError } = await supabase.rpc('admin_update_user', {
-          target_user_id: data.user.id,
+        const { error: repairError } = await supabase.rpc('repair_pharmacist_profile', {
+          target_email: email,
           target_user_name: userName,
           target_full_name: fullName,
-          target_role: 'Pharmacist',
-          target_is_active: true,
-        })
-        if (profileError) throw profileError
-
-        const { error: membershipError } = await supabase.rpc('reassign_pharmacist', {
-          target_user_id: data.user.id,
           target_pharmacy_id: formData.pharmacyId,
         })
-        if (membershipError) throw membershipError
+        if (repairError) {
+          throw new Error(`${repairError.message}. Apply repair_pharmacist_profile.sql in Supabase if this function is missing.`)
+        }
+      } else {
+        if (!data.user) throw new Error('The pharmacist account could not be created.')
+
+        const { error: createError } = await supabase.rpc('create_pharmacist', {
+          target_user_id: data.user.id,
+          target_email: email,
+          target_user_name: userName,
+          target_full_name: fullName,
+          target_pharmacy_id: formData.pharmacyId,
+        })
+        if (createError) {
+          if (!['42883', 'PGRST202'].includes(createError.code || '')) throw createError
+
+          const { error: profileError } = await supabase.rpc('admin_update_user', {
+            target_user_id: data.user.id,
+            target_user_name: userName,
+            target_full_name: fullName,
+            target_role: 'Pharmacist',
+            target_is_active: true,
+          })
+          if (profileError) throw profileError
+
+          const { error: membershipError } = await supabase.rpc('reassign_pharmacist', {
+            target_user_id: data.user.id,
+            target_pharmacy_id: formData.pharmacyId,
+          })
+          if (membershipError) throw membershipError
+        }
       }
 
       setSuccessMessage('Pharmacist account created successfully.')
