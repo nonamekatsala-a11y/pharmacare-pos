@@ -99,7 +99,7 @@ export default function MedicineSelector({ medicines, isLoading }: MedicineSelec
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
-                placeholder="Search by name, barcode, or generic name..."
+                placeholder="Search by name..."
                 className="w-full px-2 py-1 border border-primary-200 rounded-lg bg-primary-50 text-primary-900 placeholder-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white transition-colors text-xs"
               />
             </div>
@@ -121,6 +121,7 @@ export default function MedicineSelector({ medicines, isLoading }: MedicineSelec
                       >
                         <div className="font-semibold text-primary-700 text-[10px]">{medicine.medicineName}</div>
                         <div className="text-[9px] text-primary-600 mt-0">
+                          {medicine.genericName && <span>{medicine.genericName} • </span>}
                           <span>Stock: {medicine.quantity}</span>
                         </div>
                       </button>
