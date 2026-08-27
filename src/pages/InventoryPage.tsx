@@ -277,7 +277,7 @@ export default function InventoryPage() {
           </svg>
           <input
             type="text"
-            placeholder="Search by medicine name, generic name, or batch number..."
+            placeholder="Search by medicine name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full rounded-lg border border-gray-300 bg-white py-3 pl-10 pr-4 text-gray-900 placeholder-gray-500 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20"
