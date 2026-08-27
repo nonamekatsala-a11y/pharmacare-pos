@@ -139,7 +139,7 @@ export default function UsersPage() {
         target_pharmacy_id: formData.pharmacyId,
       })
       if (createError) {
-        if (createError.code !== '42883') throw createError
+        if (!['42883', 'PGRST202'].includes(createError.code || '')) throw createError
 
         const { error: profileError } = await supabase.rpc('admin_update_user', {
           target_user_id: data.user.id,
@@ -162,7 +162,10 @@ export default function UsersPage() {
       closeModal()
     } catch (error) {
       console.error('Failed to create pharmacist:', error)
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to create pharmacist')
+      const message = error instanceof Error ? error.message : 'Failed to create pharmacist'
+      setErrorMessage(message.toLowerCase().includes('already registered')
+        ? 'This email already has an account. Use a different email or edit the existing user.'
+        : message)
     } finally {
       setIsSaving(false)
     }
