@@ -9,7 +9,7 @@ interface User {
   userName: string
   email: string
   fullName?: string
-  role: 'Admin' | 'Cashier' | 'Pharmacist'
+  role: 'Admin' | 'Pharmacist'
   isActive: boolean
   pharmacies: string[]
   pharmacyIds: string[]
@@ -27,7 +27,7 @@ export default function UsersPage() {
     userName: '',
     email: '',
     fullName: '',
-    role: 'Cashier' as User['role'],
+    role: 'Pharmacist' as User['role'],
     isActive: true,
     newPassword: '',
     pharmacyId: '',
@@ -91,7 +91,7 @@ export default function UsersPage() {
     setIsAddingUser(true)
     setSuccessMessage('')
     setErrorMessage('')
-    setFormData({ userName: '', email: '', fullName: '', role: 'Cashier', isActive: true, newPassword: '', pharmacyId: '' })
+    setFormData({ userName: '', email: '', fullName: '', role: 'Pharmacist', isActive: true, newPassword: '', pharmacyId: '' })
     setShowModal(true)
   }
 
@@ -331,7 +331,6 @@ export default function UsersPage() {
               onChange={(e) => setFormData({ ...formData, role: e.target.value as User['role'] })}
               className="w-full rounded-lg border border-gray-300 px-4 py-2"
             >
-              <option value="Cashier">Cashier</option>
               <option value="Pharmacist">Pharmacist</option>
               <option value="Admin">Admin</option>
             </select>
