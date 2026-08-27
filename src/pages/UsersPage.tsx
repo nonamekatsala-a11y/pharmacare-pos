@@ -21,6 +21,7 @@ export default function UsersPage() {
   const [showModal, setShowModal] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [isAddingUser, setIsAddingUser] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const [formData, setFormData] = useState({
@@ -97,11 +98,13 @@ export default function UsersPage() {
 
   const handleSaveUser = async () => {
     setErrorMessage('')
+    setIsSaving(true)
     try {
       if (isAddingUser) {
         // Create new user
         if (!formData.userName.trim() || !formData.email.trim() || !formData.newPassword.trim()) {
           setErrorMessage('Username, email, and password are required for new users')
+          setIsSaving(false)
           return
         }
 
@@ -126,17 +129,14 @@ export default function UsersPage() {
           throw new Error('Failed to create user: No user data returned')
         }
 
-        // Create or update the profile directly
-        const { error: profileError } = await getSupabaseClient()
-          .from('profiles')
-          .upsert({
-            id: authData.user.id,
-            user_name: formData.userName.trim(),
-            full_name: formData.fullName.trim() || null,
-            role: formData.role,
-            is_active: true,
-            email: formData.email.trim(),
-          })
+        // Create the profile using the admin function
+        const { error: profileError } = await getSupabaseClient().rpc('create_user_profile', {
+          target_user_id: authData.user.id,
+          target_user_name: formData.userName.trim(),
+          target_full_name: formData.fullName.trim() || null,
+          target_role: formData.role,
+          target_email: formData.email.trim(),
+        })
 
         if (profileError) {
           throw new Error(`Failed to create user profile: ${profileError.message}`)
@@ -230,6 +230,8 @@ export default function UsersPage() {
     } catch (error) {
       console.error('Failed to save user:', error)
       setErrorMessage(error instanceof Error ? error.message : 'Failed to save user')
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -384,10 +386,10 @@ export default function UsersPage() {
               </label>
             )}
             <div className="flex gap-3">
-              <Button onClick={handleSaveUser} className="flex-1 bg-blue-500 hover:bg-blue-600">
-                {isAddingUser ? 'Create User' : 'Save Changes'}
+              <Button onClick={handleSaveUser} disabled={isSaving} className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                {isSaving ? (isAddingUser ? 'Creating...' : 'Saving...') : (isAddingUser ? 'Create User' : 'Save Changes')}
               </Button>
-              <Button onClick={() => setShowModal(false)} className="flex-1 bg-gray-300 hover:bg-gray-400">
+              <Button onClick={() => setShowModal(false)} disabled={isSaving} className="flex-1 bg-gray-300 hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed">
                 Cancel
               </Button>
             </div>
