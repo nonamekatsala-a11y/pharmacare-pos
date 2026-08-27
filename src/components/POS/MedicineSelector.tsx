@@ -71,7 +71,7 @@ export default function MedicineSelector({ medicines, isLoading }: MedicineSelec
   const canAddToCart = selectedMedicine && quantity > 0 && quantity <= selectedMedicine.quantity
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col" style={{ fontFamily: 'Times New Roman, serif' }}>
       {/* Header */}
       <div className="mb-2">
         <h2 className="text-base font-bold text-primary-700">Sell Medicine</h2>
@@ -141,13 +141,6 @@ export default function MedicineSelector({ medicines, isLoading }: MedicineSelec
 
                 {/* Details Grid */}
                 <div className="space-y-1.5">
-                  {selectedMedicine.genericName && (
-                    <div>
-                      <p className="text-[9px] text-primary-600 font-semibold">Generic Name</p>
-                      <p className="text-[10px] text-primary-700">{selectedMedicine.genericName}</p>
-                    </div>
-                  )}
-
                   <div className="grid grid-cols-2 gap-1.5">
                     <div>
                       <p className="text-[9px] text-primary-600 font-semibold">Price</p>
@@ -163,27 +156,6 @@ export default function MedicineSelector({ medicines, isLoading }: MedicineSelec
                         {selectedMedicine.quantity}
                       </p>
                     </div>
-                  </div>
-
-                  {selectedMedicine.category && (
-                    <div>
-                      <p className="text-[9px] text-primary-600 font-semibold">Category</p>
-                      <p className="text-[10px] text-primary-700">{selectedMedicine.category}</p>
-                    </div>
-                  )}
-
-                  {selectedMedicine.expiryDate && (
-                    <div>
-                      <p className="text-[9px] text-primary-600 font-semibold">Expiry Date</p>
-                      <p className="text-[10px] text-primary-700">
-                        {new Date(selectedMedicine.expiryDate).toLocaleDateString()}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="border-t border-primary-200 pt-1.5">
-                    <p className="text-[9px] text-primary-600 font-semibold">Barcode</p>
-                    <p className="text-[9px] text-primary-700 font-mono">{selectedMedicine.barcode}</p>
                   </div>
                 </div>
               </div>

@@ -38,7 +38,7 @@ export default function Cart({ onCheckout }: CartProps) {
   }
 
   return (
-    <div className="flex flex-col min-h-full">
+    <div className="flex flex-col min-h-full" style={{ fontFamily: 'Times New Roman, serif' }}>
       {/* Cart Header - Compact */}
       <div className="mb-2 flex-shrink-0">
         <h2 className="text-xl font-bold text-primary-700">Cart</h2>
