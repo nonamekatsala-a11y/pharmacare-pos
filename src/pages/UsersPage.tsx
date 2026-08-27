@@ -20,10 +20,12 @@ export default function UsersPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [isAddingUser, setIsAddingUser] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const [formData, setFormData] = useState({
     userName: '',
+    email: '',
     fullName: '',
     role: 'Cashier' as User['role'],
     isActive: true,
@@ -77,86 +79,137 @@ export default function UsersPage() {
 
   const openEditUser = (user: User) => {
     setEditingUser(user)
+    setIsAddingUser(false)
     setSuccessMessage('')
     setErrorMessage('')
-    setFormData({ userName: user.userName, fullName: user.fullName || '', role: user.role, isActive: user.isActive, newPassword: '', pharmacyId: user.pharmacyIds[0] || '' })
+    setFormData({ userName: user.userName, email: user.email, fullName: user.fullName || '', role: user.role, isActive: user.isActive, newPassword: '', pharmacyId: user.pharmacyIds[0] || '' })
+    setShowModal(true)
+  }
+
+  const openAddUser = () => {
+    setEditingUser(null)
+    setIsAddingUser(true)
+    setSuccessMessage('')
+    setErrorMessage('')
+    setFormData({ userName: '', email: '', fullName: '', role: 'Cashier', isActive: true, newPassword: '', pharmacyId: '' })
     setShowModal(true)
   }
 
   const handleSaveUser = async () => {
-    if (!editingUser) return
     setErrorMessage('')
     try {
-      const { error } = await getSupabaseClient().rpc('admin_update_user', {
-        target_user_id: editingUser.id,
-        target_user_name: formData.userName.trim(),
-        target_full_name: formData.fullName.trim() || null,
-        target_role: formData.role,
-        target_is_active: formData.isActive,
-      })
-      if (error) throw error
+      if (isAddingUser) {
+        // Create new user
+        if (!formData.userName.trim() || !formData.email.trim() || !formData.newPassword.trim()) {
+          setErrorMessage('Username, email, and password are required for new users')
+          return
+        }
 
-      if (formData.newPassword.trim()) {
-        const currentUser = await getSupabaseClient().auth.getUser()
-        if (currentUser.data.user?.id === editingUser.id) {
-          const { error: passwordError } = await getSupabaseClient().auth.updateUser({
-            password: formData.newPassword,
-          })
-          if (passwordError) {
-            const functionError = passwordError as { context?: Response; message?: string }
-            let message = functionError.message || 'Failed to change the user password.'
-            if (functionError.context) {
-              try {
-                const responseBody = await functionError.context.json() as { error?: string }
-                message = responseBody.error || message
-              } catch {
-                // Keep the SDK error when the function response is not JSON.
-              }
-            }
-            throw new Error(message)
-          }
-        } else {
-          const { error: passwordError } = await getSupabaseClient().functions.invoke('admin-update-password', {
-            body: {
-              userId: editingUser.id,
-              password: formData.newPassword,
+        // Create user via Supabase auth
+        const { data: authData, error: authError } = await getSupabaseClient().auth.signUp({
+          email: formData.email.trim(),
+          password: formData.newPassword.trim(),
+          options: {
+            data: {
+              user_name: formData.userName.trim(),
+              full_name: formData.fullName.trim() || null,
+              role: formData.role,
             },
-          })
-          if (passwordError) {
-            const functionError = passwordError as { context?: Response; message?: string }
-            let message = functionError.message || 'Failed to change the user password.'
-            if (functionError.context) {
-              try {
-                const responseBody = await functionError.context.json() as { error?: string }
-                message = responseBody.error || message
-              } catch {
-                // Keep the SDK error when the function response is not JSON.
-              }
-            }
-            throw new Error(message)
-          }
-          setSuccessMessage('The user password was changed successfully.')
-        }
-      }
-
-      if (formData.role === 'Pharmacist' && formData.pharmacyId) {
-        const { error: membershipError } = await getSupabaseClient().rpc('reassign_pharmacist', {
-          target_user_id: editingUser.id,
-          target_pharmacy_id: formData.pharmacyId,
+          },
         })
-        if (membershipError) {
-          throw new Error(`Failed to reassign pharmacist: ${membershipError.message}`)
+
+        if (authError) {
+          throw new Error(authError.message || 'Failed to create user')
         }
+
+        // Assign pharmacy for pharmacists
+        if (formData.role === 'Pharmacist' && formData.pharmacyId) {
+          const { error: membershipError } = await getSupabaseClient().rpc('reassign_pharmacist', {
+            target_user_id: authData.user.id,
+            target_pharmacy_id: formData.pharmacyId,
+          })
+          if (membershipError) {
+            throw new Error(`Failed to assign pharmacist to pharmacy: ${membershipError.message}`)
+          }
+        }
+
+        setSuccessMessage('User created successfully!')
+      } else {
+        // Edit existing user
+        if (!editingUser) return
+
+        const { error } = await getSupabaseClient().rpc('admin_update_user', {
+          target_user_id: editingUser.id,
+          target_user_name: formData.userName.trim(),
+          target_full_name: formData.fullName.trim() || null,
+          target_role: formData.role,
+          target_is_active: formData.isActive,
+        })
+        if (error) throw error
+
+        if (formData.newPassword.trim()) {
+          const currentUser = await getSupabaseClient().auth.getUser()
+          if (currentUser.data.user?.id === editingUser.id) {
+            const { error: passwordError } = await getSupabaseClient().auth.updateUser({
+              password: formData.newPassword,
+            })
+            if (passwordError) {
+              const functionError = passwordError as { context?: Response; message?: string }
+              let message = functionError.message || 'Failed to change the user password.'
+              if (functionError.context) {
+                try {
+                  const responseBody = await functionError.context.json() as { error?: string }
+                  message = responseBody.error || message
+                } catch {
+                  // Keep the SDK error when the function response is not JSON.
+                }
+              }
+              throw new Error(message)
+            }
+          } else {
+            const { error: passwordError } = await getSupabaseClient().functions.invoke('admin-update-password', {
+              body: {
+                userId: editingUser.id,
+                password: formData.newPassword,
+              },
+            })
+            if (passwordError) {
+              const functionError = passwordError as { context?: Response; message?: string }
+              let message = functionError.message || 'Failed to change the user password.'
+              if (functionError.context) {
+                try {
+                  const responseBody = await functionError.context.json() as { error?: string }
+                  message = responseBody.error || message
+                } catch {
+                  // Keep the SDK error when the function response is not JSON.
+                }
+              }
+              throw new Error(message)
+            }
+            setSuccessMessage('The user password was changed successfully.')
+          }
+        }
+
+        if (formData.role === 'Pharmacist' && formData.pharmacyId) {
+          const { error: membershipError } = await getSupabaseClient().rpc('reassign_pharmacist', {
+            target_user_id: editingUser.id,
+            target_pharmacy_id: formData.pharmacyId,
+          })
+          if (membershipError) {
+            throw new Error(`Failed to reassign pharmacist: ${membershipError.message}`)
+          }
+        }
+
+        setSuccessMessage('User updated successfully!')
       }
 
-      if (!formData.newPassword.trim()) {
-        setShowModal(false)
-        setEditingUser(null)
-      }
+      setShowModal(false)
+      setEditingUser(null)
+      setIsAddingUser(false)
       await loadUsers()
     } catch (error) {
-      console.error('Failed to update user:', error)
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to update user')
+      console.error('Failed to save user:', error)
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to save user')
     }
   }
 
@@ -171,6 +224,9 @@ export default function UsersPage() {
           <h1 className="text-3xl font-bold text-gray-900">Users</h1>
           <p className="mt-2 text-gray-600">Manage system users and permissions</p>
         </div>
+        <Button onClick={openAddUser} variant="primary">
+          Add User
+        </Button>
       </div>
 
       <div className="rounded-lg bg-white shadow-sm overflow-x-auto">
@@ -230,8 +286,8 @@ export default function UsersPage() {
         </table>
       </div>
 
-      {showModal && editingUser && (
-        <Modal isOpen={showModal} title="Edit User" onClose={() => { setShowModal(false); setEditingUser(null); setSuccessMessage(''); setErrorMessage('') }}>
+      {showModal && (
+        <Modal isOpen={showModal} title={isAddingUser ? "Add User" : "Edit User"} onClose={() => { setShowModal(false); setEditingUser(null); setIsAddingUser(false); setSuccessMessage(''); setErrorMessage('') }}>
           <div className="space-y-4">
             {errorMessage && (
               <div role="alert" aria-live="assertive" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
@@ -249,8 +305,16 @@ export default function UsersPage() {
               value={formData.userName}
               onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
               className="w-full rounded-lg border border-gray-300 px-4 py-2"
+              disabled={!isAddingUser}
             />
-            <input type="text" value={editingUser.email} disabled className="w-full rounded-lg border border-gray-200 bg-gray-100 px-4 py-2 text-gray-500" />
+            <input
+              type="email"
+              placeholder="Email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="w-full rounded-lg border border-gray-300 px-4 py-2"
+              disabled={!isAddingUser}
+            />
             <input
               type="text"
               placeholder="Full Name"
@@ -281,22 +345,24 @@ export default function UsersPage() {
             )}
             <input
               type="password"
-              placeholder="New password (optional)"
+              placeholder={isAddingUser ? "Password (required)" : "New password (optional)"}
               value={formData.newPassword}
               onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
               minLength={6}
               className="w-full rounded-lg border border-gray-300 px-4 py-2"
             />
             <p className="text-xs text-gray-500">
-              An admin can change this user&apos;s password directly. Use at least 6 characters.
+              {isAddingUser ? "Password must be at least 6 characters." : "An admin can change this user's password directly. Use at least 6 characters."}
             </p>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input type="checkbox" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />
-              Active account
-            </label>
+            {!isAddingUser && (
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />
+                Active account
+              </label>
+            )}
             <div className="flex gap-3">
               <Button onClick={handleSaveUser} className="flex-1 bg-blue-500 hover:bg-blue-600">
-                Save Changes
+                {isAddingUser ? 'Create User' : 'Save Changes'}
               </Button>
               <Button onClick={() => setShowModal(false)} className="flex-1 bg-gray-300 hover:bg-gray-400">
                 Cancel
