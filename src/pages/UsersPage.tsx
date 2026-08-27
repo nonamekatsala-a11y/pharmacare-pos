@@ -20,10 +20,13 @@ export default function UsersPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [isCreatingPharmacist, setIsCreatingPharmacist] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const [formData, setFormData] = useState({
     userName: '',
+    email: '',
     fullName: '',
     role: 'Cashier' as User['role'],
     isActive: true,
@@ -76,16 +79,97 @@ export default function UsersPage() {
   }
 
   const openEditUser = (user: User) => {
+    setIsCreatingPharmacist(false)
     setEditingUser(user)
     setSuccessMessage('')
     setErrorMessage('')
-    setFormData({ userName: user.userName, fullName: user.fullName || '', role: user.role, isActive: user.isActive, newPassword: '', pharmacyId: user.pharmacyIds[0] || '' })
+    setFormData({ userName: user.userName, email: user.email, fullName: user.fullName || '', role: user.role, isActive: user.isActive, newPassword: '', pharmacyId: user.pharmacyIds[0] || '' })
     setShowModal(true)
+  }
+
+  const openCreatePharmacist = () => {
+    setEditingUser(null)
+    setIsCreatingPharmacist(true)
+    setSuccessMessage('')
+    setErrorMessage('')
+    setFormData({ userName: '', email: '', fullName: '', role: 'Pharmacist', isActive: true, newPassword: '', pharmacyId: '' })
+    setShowModal(true)
+  }
+
+  const closeModal = () => {
+    setShowModal(false)
+    setEditingUser(null)
+    setIsCreatingPharmacist(false)
+    setSuccessMessage('')
+    setErrorMessage('')
+  }
+
+  const handleCreatePharmacist = async () => {
+    const userName = formData.userName.trim()
+    const email = formData.email.trim().toLowerCase()
+    const fullName = formData.fullName.trim()
+    const password = formData.newPassword.trim()
+
+    if (!email || !email.includes('@')) {
+      setErrorMessage('Enter a valid email address for the pharmacist.')
+      return
+    }
+    if (!userName || !fullName || !password || password.length < 6 || !formData.pharmacyId) {
+      setErrorMessage('Username, full name, password (at least 6 characters), and pharmacy are required.')
+      return
+    }
+
+    setErrorMessage('')
+    setIsSaving(true)
+    const supabase = getSupabaseClient()
+    try {
+      const { data: adminSession } = await supabase.auth.getSession()
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: fullName, user_name: userName } },
+      })
+      if (error) throw error
+      if (!data.user) throw new Error('The pharmacist account could not be created.')
+
+      if (adminSession.session) {
+        const { error: restoreError } = await supabase.auth.setSession({
+          access_token: adminSession.session.access_token,
+          refresh_token: adminSession.session.refresh_token,
+        })
+        if (restoreError) throw restoreError
+      }
+
+      const { error: profileError } = await supabase.rpc('admin_update_user', {
+        target_user_id: data.user.id,
+        target_user_name: userName,
+        target_full_name: fullName,
+        target_role: 'Pharmacist',
+        target_is_active: true,
+      })
+      if (profileError) throw profileError
+
+      const { error: membershipError } = await supabase.rpc('reassign_pharmacist', {
+        target_user_id: data.user.id,
+        target_pharmacy_id: formData.pharmacyId,
+      })
+      if (membershipError) throw membershipError
+
+      setSuccessMessage('Pharmacist account created successfully.')
+      await loadUsers()
+      closeModal()
+    } catch (error) {
+      console.error('Failed to create pharmacist:', error)
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to create pharmacist')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const handleSaveUser = async () => {
     if (!editingUser) return
     setErrorMessage('')
+    setIsSaving(true)
     try {
       const { error } = await getSupabaseClient().rpc('admin_update_user', {
         target_user_id: editingUser.id,
@@ -157,6 +241,8 @@ export default function UsersPage() {
     } catch (error) {
       console.error('Failed to update user:', error)
       setErrorMessage(error instanceof Error ? error.message : 'Failed to update user')
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -171,6 +257,9 @@ export default function UsersPage() {
           <h1 className="text-3xl font-bold text-gray-900">Users</h1>
           <p className="mt-2 text-gray-600">Manage system users and permissions</p>
         </div>
+        <Button onClick={openCreatePharmacist} className="bg-blue-500 hover:bg-blue-600">
+          Add Pharmacist
+        </Button>
       </div>
 
       <div className="rounded-lg bg-white shadow-sm overflow-x-auto">
@@ -230,8 +319,8 @@ export default function UsersPage() {
         </table>
       </div>
 
-      {showModal && editingUser && (
-        <Modal isOpen={showModal} title="Edit User" onClose={() => { setShowModal(false); setEditingUser(null); setSuccessMessage(''); setErrorMessage('') }}>
+      {showModal && (editingUser || isCreatingPharmacist) && (
+        <Modal isOpen={showModal} title={isCreatingPharmacist ? 'Add Pharmacist' : 'Edit User'} onClose={closeModal}>
           <div className="space-y-4">
             {errorMessage && (
               <div role="alert" aria-live="assertive" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
@@ -250,7 +339,17 @@ export default function UsersPage() {
               onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
               className="w-full rounded-lg border border-gray-300 px-4 py-2"
             />
-            <input type="text" value={editingUser.email} disabled className="w-full rounded-lg border border-gray-200 bg-gray-100 px-4 py-2 text-gray-500" />
+            {isCreatingPharmacist ? (
+              <input
+                type="email"
+                placeholder="Email address"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2"
+              />
+            ) : (
+              <input type="text" value={editingUser?.email || ''} disabled className="w-full rounded-lg border border-gray-200 bg-gray-100 px-4 py-2 text-gray-500" />
+            )}
             <input
               type="text"
               placeholder="Full Name"
@@ -258,7 +357,7 @@ export default function UsersPage() {
               onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
               className="w-full rounded-lg border border-gray-300 px-4 py-2"
             />
-            <select
+            {!isCreatingPharmacist && <select
               value={formData.role}
               onChange={(e) => setFormData({ ...formData, role: e.target.value as User['role'] })}
               className="w-full rounded-lg border border-gray-300 px-4 py-2"
@@ -266,8 +365,8 @@ export default function UsersPage() {
               <option value="Cashier">Cashier</option>
               <option value="Pharmacist">Pharmacist</option>
               <option value="Admin">Admin</option>
-            </select>
-            {formData.role === 'Pharmacist' && (
+            </select>}
+            {(isCreatingPharmacist || formData.role === 'Pharmacist') && (
               <select
                 value={formData.pharmacyId}
                 onChange={(e) => setFormData({ ...formData, pharmacyId: e.target.value })}
@@ -281,24 +380,22 @@ export default function UsersPage() {
             )}
             <input
               type="password"
-              placeholder="New password (optional)"
+              placeholder={isCreatingPharmacist ? 'Password' : 'New password (optional)'}
               value={formData.newPassword}
               onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
               minLength={6}
               className="w-full rounded-lg border border-gray-300 px-4 py-2"
             />
-            <p className="text-xs text-gray-500">
-              An admin can change this user&apos;s password directly. Use at least 6 characters.
-            </p>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
+            <p className="text-xs text-gray-500">Use at least 6 characters.</p>
+            {!isCreatingPharmacist && <label className="flex items-center gap-2 text-sm text-gray-700">
               <input type="checkbox" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />
               Active account
-            </label>
+            </label>}
             <div className="flex gap-3">
-              <Button onClick={handleSaveUser} className="flex-1 bg-blue-500 hover:bg-blue-600">
-                Save Changes
+              <Button onClick={isCreatingPharmacist ? handleCreatePharmacist : handleSaveUser} disabled={isSaving} className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-60">
+                {isSaving ? 'Saving...' : isCreatingPharmacist ? 'Create Pharmacist' : 'Save Changes'}
               </Button>
-              <Button onClick={() => setShowModal(false)} className="flex-1 bg-gray-300 hover:bg-gray-400">
+              <Button onClick={closeModal} disabled={isSaving} className="flex-1 bg-gray-300 hover:bg-gray-400">
                 Cancel
               </Button>
             </div>
