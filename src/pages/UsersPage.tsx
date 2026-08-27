@@ -23,6 +23,7 @@ export default function UsersPage() {
   const [isCreatingPharmacist, setIsCreatingPharmacist] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
+  const [deleteConfirmUser, setDeleteConfirmUser] = useState<User | null>(null)
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const [formData, setFormData] = useState({
@@ -267,9 +268,16 @@ export default function UsersPage() {
 
   const handleDeletePharmacist = async (user: User) => {
     if (user.role !== 'Pharmacist') return
-    if (!window.confirm(`Delete pharmacist ${user.fullName || user.userName}? This cannot be undone.`)) return
 
     setErrorMessage('')
+    setDeleteConfirmUser(user)
+  }
+
+  const confirmDeletePharmacist = async () => {
+    if (!deleteConfirmUser) return
+
+    const user = deleteConfirmUser
+    setDeleteConfirmUser(null)
     setDeletingUserId(user.id)
     try {
       const { error } = await getSupabaseClient().rpc('delete_pharmacist', {
@@ -381,6 +389,24 @@ export default function UsersPage() {
           </tbody>
         </table>
       </div>
+
+      {deleteConfirmUser && (
+        <Modal isOpen title="Delete Pharmacist" onClose={() => setDeleteConfirmUser(null)} size="sm">
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Delete {deleteConfirmUser.fullName || deleteConfirmUser.userName}? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <Button onClick={confirmDeletePharmacist} className="flex-1 bg-red-500 hover:bg-red-600">
+                Delete
+              </Button>
+              <Button onClick={() => setDeleteConfirmUser(null)} variant="secondary" className="flex-1">
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {showModal && (editingUser || isCreatingPharmacist) && (
         <Modal isOpen={showModal} title={isCreatingPharmacist ? 'Add Pharmacist' : 'Edit User'} onClose={closeModal}>
