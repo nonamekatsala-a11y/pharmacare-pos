@@ -110,7 +110,6 @@ export default function UsersPage() {
           email: formData.email.trim(),
           password: formData.newPassword.trim(),
           options: {
-            emailConfirm: true,
             data: {
               user_name: formData.userName.trim(),
               full_name: formData.fullName.trim() || null,
