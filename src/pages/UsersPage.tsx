@@ -426,6 +426,7 @@ export default function UsersPage() {
               placeholder="Username"
               value={formData.userName}
               onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
+              autoComplete={isCreatingPharmacist ? 'off' : undefined}
               className="w-full rounded-lg border border-gray-300 px-4 py-2"
             />
             {isCreatingPharmacist ? (
@@ -434,6 +435,7 @@ export default function UsersPage() {
                 placeholder="Email address"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                autoComplete="off"
                 className="w-full rounded-lg border border-gray-300 px-4 py-2"
               />
             ) : (
@@ -444,6 +446,7 @@ export default function UsersPage() {
               placeholder="Full Name"
               value={formData.fullName}
               onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+              autoComplete={isCreatingPharmacist ? 'off' : undefined}
               className="w-full rounded-lg border border-gray-300 px-4 py-2"
             />
             {!isCreatingPharmacist && <select
@@ -459,6 +462,7 @@ export default function UsersPage() {
               <select
                 value={formData.pharmacyId}
                 onChange={(e) => setFormData({ ...formData, pharmacyId: e.target.value })}
+                autoComplete="off"
                 className="w-full rounded-lg border border-gray-300 px-4 py-2"
               >
                 <option value="">Select pharmacy</option>
@@ -473,6 +477,7 @@ export default function UsersPage() {
               value={formData.newPassword}
               onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
               minLength={6}
+              autoComplete={isCreatingPharmacist ? 'new-password' : undefined}
               className="w-full rounded-lg border border-gray-300 px-4 py-2"
             />
             <p className="text-xs text-gray-500">Use at least 6 characters.</p>

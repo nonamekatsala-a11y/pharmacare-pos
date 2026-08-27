@@ -87,9 +87,10 @@ export default function Cart({ onCheckout }: CartProps) {
                   <td className="px-3 py-2 text-center">
                     <button
                       onClick={() => handleRemove(item.medicineId)}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50 w-6 h-6 flex items-center justify-center rounded text-xs font-bold transition-colors"
+                      aria-label={`Delete ${item.medicineName} from cart`}
+                      className="rounded px-2 py-1 text-xs font-semibold text-red-500 transition-colors hover:bg-red-50 hover:text-red-700"
                     >
-                      ×
+                      Delete
                     </button>
                   </td>
                 </tr>
