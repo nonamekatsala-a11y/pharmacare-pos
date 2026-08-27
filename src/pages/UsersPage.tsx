@@ -22,6 +22,7 @@ export default function UsersPage() {
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [isCreatingPharmacist, setIsCreatingPharmacist] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const [formData, setFormData] = useState({
@@ -264,6 +265,27 @@ export default function UsersPage() {
     }
   }
 
+  const handleDeletePharmacist = async (user: User) => {
+    if (user.role !== 'Pharmacist') return
+    if (!window.confirm(`Delete pharmacist ${user.fullName || user.userName}? This cannot be undone.`)) return
+
+    setErrorMessage('')
+    setDeletingUserId(user.id)
+    try {
+      const { error } = await getSupabaseClient().rpc('delete_pharmacist', {
+        target_user_id: user.id,
+      })
+      if (error) throw error
+      setSuccessMessage('Pharmacist deleted successfully.')
+      await loadUsers()
+    } catch (error) {
+      console.error('Failed to delete pharmacist:', error)
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to delete pharmacist')
+    } finally {
+      setDeletingUserId(null)
+    }
+  }
+
   if (isLoading) {
     return <div className="p-8">Loading users...</div>
   }
@@ -279,6 +301,17 @@ export default function UsersPage() {
           Add Pharmacist
         </Button>
       </div>
+
+      {errorMessage && !showModal && (
+        <div role="alert" aria-live="assertive" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
+          {errorMessage}
+        </div>
+      )}
+      {successMessage && !showModal && (
+        <div role="status" aria-live="polite" className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm font-medium text-green-700">
+          {successMessage}
+        </div>
+      )}
 
       <div className="rounded-lg bg-white shadow-sm overflow-x-auto">
         <table className="w-full">
@@ -326,9 +359,21 @@ export default function UsersPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm">
-                    <Button onClick={() => openEditUser(user)} size="sm" variant="secondary">
-                      Edit
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button onClick={() => openEditUser(user)} size="sm" variant="secondary">
+                        Edit
+                      </Button>
+                      {user.role === 'Pharmacist' && (
+                        <Button
+                          onClick={() => handleDeletePharmacist(user)}
+                          size="sm"
+                          variant="danger"
+                          disabled={deletingUserId === user.id}
+                        >
+                          {deletingUserId === user.id ? 'Deleting...' : 'Delete'}
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))
