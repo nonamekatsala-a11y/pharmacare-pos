@@ -12,15 +12,27 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+DECLARE
+  current_user_id uuid;
+  user_role text;
+  user_is_active boolean;
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1
-    FROM profiles
-    WHERE id = auth.uid()
-      AND role = 'Admin'
-      AND is_active = true
-  ) THEN
-    RAISE EXCEPTION 'Only active administrators can create user profiles';
+  -- Get current user ID
+  current_user_id := auth.uid();
+  
+  -- Check if user is authenticated
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'User not authenticated';
+  END IF;
+
+  -- Get user role and active status
+  SELECT role, is_active INTO user_role, user_is_active
+  FROM profiles
+  WHERE id = current_user_id;
+
+  -- Check if user is an active administrator
+  IF user_role != 'Admin' OR user_is_active != true THEN
+    RAISE EXCEPTION 'Only active administrators can create user profiles. Current role: %, Active: %', user_role, user_is_active;
   END IF;
 
   IF target_role NOT IN ('Admin', 'Cashier', 'Pharmacist') THEN
