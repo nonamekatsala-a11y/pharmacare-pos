@@ -121,7 +121,6 @@ export default function MedicineSelector({ medicines, isLoading }: MedicineSelec
                       >
                         <div className="font-semibold text-primary-700 text-[10px]">{medicine.medicineName}</div>
                         <div className="text-[9px] text-primary-600 mt-0">
-                          {medicine.genericName && <span>{medicine.genericName} • </span>}
                           <span>Stock: {medicine.quantity}</span>
                         </div>
                       </button>
