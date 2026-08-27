@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import Button from '@components/Common/Button'
 import Modal from '@components/Common/Modal'
-import { getSupabaseClient } from '@lib/supabaseClient'
+import { createSignUpClient, getSupabaseClient } from '@lib/supabaseClient'
 import { PHARMACIES } from '@config/pharmacyConfig'
 
 interface User {
@@ -123,22 +123,13 @@ export default function UsersPage() {
     setIsSaving(true)
     const supabase = getSupabaseClient()
     try {
-      const { data: adminSession } = await supabase.auth.getSession()
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await createSignUpClient().auth.signUp({
         email,
         password,
         options: { data: { full_name: fullName, user_name: userName } },
       })
       if (error) throw error
       if (!data.user) throw new Error('The pharmacist account could not be created.')
-
-      if (adminSession.session) {
-        const { error: restoreError } = await supabase.auth.setSession({
-          access_token: adminSession.session.access_token,
-          refresh_token: adminSession.session.refresh_token,
-        })
-        if (restoreError) throw restoreError
-      }
 
       const { error: profileError } = await supabase.rpc('admin_update_user', {
         target_user_id: data.user.id,

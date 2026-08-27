@@ -17,3 +17,19 @@ export const getSupabaseClient = (): SupabaseClient => {
 
   return supabase
 }
+
+export const createSignUpClient = (): SupabaseClient => {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error(
+      'Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in web/.env.',
+    )
+  }
+
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  })
+}

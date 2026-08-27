@@ -71,7 +71,7 @@ const getUserFromSession = async (pharmacyId?: string): Promise<AuthResult> => {
   }
 }
 
-const resolveAuthEmail = (userName: string): string => {
+const resolveAuthEmail = async (userName: string): Promise<string> => {
   const normalizedUserName = userName.trim().toLowerCase()
   if (normalizedUserName.includes('@')) return normalizedUserName
   if (normalizedUserName === ADMIN_ACCOUNT.userName) {
@@ -81,14 +81,21 @@ const resolveAuthEmail = (userName: string): string => {
   const pharmacist = PHARMACIES.find(
     (pharmacy) => pharmacy.pharmacist.userName.toLowerCase() === normalizedUserName,
   )
-  return pharmacist?.pharmacist.email || `${normalizedUserName}@pharmacare.local`
+  if (pharmacist) return pharmacist.pharmacist.email
+
+  const { data: profileEmail, error } = await getSupabaseClient()
+    .rpc('resolve_login_email', { login_user_name: userName.trim() })
+
+  if (error) throw error
+  if (!profileEmail) throw new Error('No account was found for that username.')
+  return profileEmail as string
 }
 
 export const authService = {
   login: async (request: LoginRequest): Promise<AuthResult> => {
     const supabase = getSupabaseClient()
     const { error } = await supabase.auth.signInWithPassword({
-      email: resolveAuthEmail(request.userName),
+      email: await resolveAuthEmail(request.userName),
       password: request.password,
     })
 
