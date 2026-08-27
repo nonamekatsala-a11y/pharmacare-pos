@@ -324,6 +324,7 @@ export default function UsersPage() {
               onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
               className="w-full rounded-lg border border-gray-300 px-4 py-2"
               disabled={!isAddingUser}
+              autoComplete="off"
             />
             <input
               type="email"
@@ -332,6 +333,7 @@ export default function UsersPage() {
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="w-full rounded-lg border border-gray-300 px-4 py-2"
               disabled={!isAddingUser}
+              autoComplete="off"
             />
             <input
               type="text"
@@ -339,6 +341,7 @@ export default function UsersPage() {
               value={formData.fullName}
               onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
               className="w-full rounded-lg border border-gray-300 px-4 py-2"
+              autoComplete="off"
             />
             <select
               value={formData.role}
@@ -367,6 +370,7 @@ export default function UsersPage() {
               onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
               minLength={6}
               className="w-full rounded-lg border border-gray-300 px-4 py-2"
+              autoComplete="new-password"
             />
             <p className="text-xs text-gray-500">
               {isAddingUser ? "Password must be at least 6 characters." : "An admin can change this user's password directly. Use at least 6 characters."}
