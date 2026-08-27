@@ -110,6 +110,7 @@ export default function UsersPage() {
           email: formData.email.trim(),
           password: formData.newPassword.trim(),
           options: {
+            emailConfirm: true,
             data: {
               user_name: formData.userName.trim(),
               full_name: formData.fullName.trim() || null,
@@ -124,6 +125,19 @@ export default function UsersPage() {
 
         if (!authData.user) {
           throw new Error('Failed to create user: No user data returned')
+        }
+
+        // Update the profile with role and other details
+        const { error: profileError } = await getSupabaseClient().rpc('admin_update_user', {
+          target_user_id: authData.user.id,
+          target_user_name: formData.userName.trim(),
+          target_full_name: formData.fullName.trim() || null,
+          target_role: formData.role,
+          target_is_active: true,
+        })
+
+        if (profileError) {
+          throw new Error(`Failed to update user profile: ${profileError.message}`)
         }
 
         // Assign pharmacy for pharmacists
