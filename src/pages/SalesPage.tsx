@@ -39,7 +39,7 @@ export default function SalesPage() {
   
   // Analytics data
   const [totalRevenue, setTotalRevenue] = useState(0)
-  const [salesByPaymentMethod, setSalesByPaymentMethod] = useState<{ method: string; amount: number; percentage: number }[]>([])
+  const [salesByPaymentMethod, setSalesByPaymentMethod] = useState<{ method: string; amount: number; percentage: number; icon: string }[]>([])
   const [salesByMedicine, setSalesByMedicine] = useState<MedicineSale[]>([])
 
   useEffect(() => {
