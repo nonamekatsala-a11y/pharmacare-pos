@@ -20,7 +20,7 @@ export interface Sale {
   discount: number
   tax: number
   total: number
-  paymentMethod: 'Cash' | 'Card' | 'Credit' | 'Mpamba' | 'Airtel Money' | 'Bank Transfer'
+  paymentMethod: 'Cash' | 'Card' | 'Credit'
   status: 'Completed' | 'Refunded'
   items: SaleItem[]
   createdAt: string
@@ -44,7 +44,7 @@ export interface CheckoutRequest {
   invoiceNumber: string
   saleDate: string
   amountReceived: number
-  paymentMethod: 'Cash' | 'Card' | 'Credit' | 'Mpamba' | 'Airtel Money' | 'Bank Transfer'
+  paymentMethod: 'Cash' | 'Card' | 'Credit'
   customerId?: string
 }
 
