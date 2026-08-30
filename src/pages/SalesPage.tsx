@@ -157,17 +157,12 @@ export default function SalesPage() {
             <h1 className="text-3xl font-bold text-gray-900">Sales Report</h1>
             <p className="mt-2 text-gray-600">Review revenue trends, payment methods and medicines sold.</p>
           </div>
-          <div className="flex items-center gap-4">
-            {user?.role === 'Admin' && (
-              <AdminPharmacySelector
-                selectedPharmacy={adminSelectedPharmacy}
-                onPharmacySelect={handleAdminPharmacyChange}
-              />
-            )}
-            <button className="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors">
-              Ask Gemini
-            </button>
-          </div>
+          {user?.role === 'Admin' && (
+            <AdminPharmacySelector
+              selectedPharmacy={adminSelectedPharmacy}
+              onPharmacySelect={handleAdminPharmacyChange}
+            />
+          )}
         </div>
         {currentPharmacy && (
           <div className="flex items-center gap-2 text-sm text-primary-600 bg-primary-50 px-3 py-1.5 rounded-lg inline-flex">
