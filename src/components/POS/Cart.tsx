@@ -146,7 +146,7 @@ export default function Cart({ onCheckout }: CartProps) {
           disabled={items.length === 0 || isProcessing}
           className="w-full bg-primary-500 text-white font-semibold py-2.5 rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
         >
-          {isProcessing ? 'Completing Sale...' : 'Complete Sale'}
+          {isProcessing ? 'COMPLETING SALE...' : 'COMPLETE SALE'}
         </button>
         <button
           onClick={() => clearCart()}
