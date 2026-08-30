@@ -126,10 +126,6 @@ export default function Cart({ onCheckout }: CartProps) {
             className="w-full px-2 py-1 border border-primary-200 rounded bg-primary-50 text-primary-900 text-right text-[10px] focus:outline-none focus:ring-1 focus:ring-primary-500 focus:bg-white"
           />
         </div>
-        <div>
-          <p className="text-[9px] text-primary-600 font-semibold mb-0">Change</p>
-          <p className="text-sm font-bold text-primary-700">{formatCurrency(change)}</p>
-        </div>
       </div>
 
       {/* Action Buttons */}
