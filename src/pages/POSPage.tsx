@@ -19,7 +19,7 @@ export default function POSPage() {
   const [isReceiptOpen, setIsReceiptOpen] = useState(false)
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null)
 
-  const { items: cartItems, clearCart, getSubtotal, getTax, getTotal } = useCartStore()
+  const { items: cartItems, clearCart, getSubtotal, getTax } = useCartStore()
 
   // Prevent admins from accessing POS
   useEffect(() => {
