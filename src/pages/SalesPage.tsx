@@ -153,7 +153,7 @@ export default function SalesPage() {
   }
 
   const filteredMedicines = salesByMedicine.filter(medicine =>
-    medicine.productName.toLowerCase().includes(searchTerm.toLowerCase())
+    medicine.productName && medicine.productName.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   if (isLoading) {
