@@ -261,7 +261,6 @@ export default function SalesPage() {
                 <p className="text-sm text-gray-600">{item.method}</p>
               </div>
               <p className="mt-2 text-2xl font-bold text-gray-900">{formatCurrency(item.amount)}</p>
-              <p className="text-xs text-gray-500 mt-1">{item.percentage.toFixed(1)}% of total</p>
             </div>
           ))}
         </div>
