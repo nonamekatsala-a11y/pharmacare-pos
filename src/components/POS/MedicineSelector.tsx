@@ -84,11 +84,11 @@ export default function MedicineSelector({ medicines, isLoading }: MedicineSelec
 
           {/* Medicines List */}
           <div className="flex-1 overflow-y-auto">
-            {filteredMedicines.length === 0 ? (
+            {searchTerm && filteredMedicines.length === 0 ? (
               <div className="text-center text-primary-600 text-sm py-4">
                 {medicines.length === 0 ? 'No stock is available for this pharmacy' : 'No non-expired medicine found'}
               </div>
-            ) : (
+            ) : searchTerm && (
               <div className="space-y-2">
                 {filteredMedicines.slice(0, 12).map((medicine) => (
                   <div
