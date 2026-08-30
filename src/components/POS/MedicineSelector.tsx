@@ -77,7 +77,7 @@ export default function MedicineSelector({ medicines, isLoading }: MedicineSelec
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search medicine by name..."
-                className="w-full px-3 py-2 border border-primary-200 rounded-lg bg-primary-50 text-primary-900 placeholder-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white transition-colors text-sm"
+                className="w-full px-3 py-2 border border-blue-500 rounded-lg bg-primary-50 text-primary-900 placeholder-primary-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors text-sm"
               />
             </div>
           </div>

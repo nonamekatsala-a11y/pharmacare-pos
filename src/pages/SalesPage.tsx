@@ -106,11 +106,23 @@ export default function SalesPage() {
         return acc
       }, {} as Record<string, number>)
 
-      const paymentMethodData = Object.entries(paymentMethodTotals).map(([method, amount]) => ({
-        method,
-        amount,
-        percentage: revenue > 0 ? (amount / revenue) * 100 : 0
-      }))
+      const paymentMethodIcons: Record<string, string> = {
+        'Cash': '💵',
+        'Card': '💳',
+        'Credit': '📋',
+        'Mpamba': '📱',
+        'Airtel Money': '📱',
+        'Bank Transfer': '🏦',
+      }
+
+      const paymentMethodData = Object.entries(paymentMethodTotals)
+        .filter(([method]) => method !== 'Card' && method !== 'Credit')
+        .map(([method, amount]) => ({
+          method,
+          amount,
+          percentage: revenue > 0 ? (amount / revenue) * 100 : 0,
+          icon: paymentMethodIcons[method] || '💰'
+        }))
 
       setTotalRevenue(revenue)
       setSalesByPaymentMethod(paymentMethodData)
@@ -244,7 +256,10 @@ export default function SalesPage() {
           {/* Payment Method Cards */}
           {salesByPaymentMethod.map((item) => (
             <div key={item.method} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-              <p className="text-sm text-gray-600">{item.method}</p>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">{item.icon}</span>
+                <p className="text-sm text-gray-600">{item.method}</p>
+              </div>
               <p className="mt-2 text-2xl font-bold text-gray-900">{formatCurrency(item.amount)}</p>
               <p className="text-xs text-gray-500 mt-1">{item.percentage.toFixed(1)}% of total</p>
             </div>
