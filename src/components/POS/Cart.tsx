@@ -3,18 +3,24 @@ import { useCartStore } from '@store/cartStore'
 import { formatCurrency } from '@utils/formatters'
 
 interface CartProps {
-  onCheckout: (amountReceived: number) => Promise<void>
+  onCheckout: (total: number, paymentMethod: string) => Promise<void>
 }
 
 export default function Cart({ onCheckout }: CartProps) {
   const { items, removeItem, updateQuantity, getSubtotal, getTotal, clearCart } =
     useCartStore()
-  const [amountReceived, setAmountReceived] = useState<number>(0)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('Cash')
 
   const subtotal = getSubtotal()
   const total = getTotal()
-  const change = total > 0 ? Math.max(0, amountReceived - total) : 0
+
+  const paymentMethods = [
+    { id: 'Cash', name: 'Cash', icon: '💵' },
+    { id: 'Mpamba', name: 'Mpamba', icon: '📱' },
+    { id: 'Airtel Money', name: 'Airtel Money', icon: '📱' },
+    { id: 'Bank Transfer', name: 'Bank Transfer', icon: '🏦' },
+  ]
 
   const handleRemove = (medicineId: string) => {
     removeItem(medicineId)
@@ -31,7 +37,7 @@ export default function Cart({ onCheckout }: CartProps) {
   const handleCheckout = async () => {
     setIsProcessing(true)
     try {
-      await onCheckout(amountReceived)
+      await onCheckout(total, selectedPaymentMethod)
     } finally {
       setIsProcessing(false)
     }
@@ -112,19 +118,24 @@ export default function Cart({ onCheckout }: CartProps) {
         </div>
       </div>
 
-      {/* Payment Section - Compact */}
-      <div className="space-y-1 border-t border-primary-200 pt-2 mb-2 flex-shrink-0">
-        <div>
-          <label className="block text-[9px] font-semibold text-primary-700 mb-0.5">
-            Amount Received
-          </label>
-          <input
-            type="number"
-            value={amountReceived || ''}
-            onChange={(e) => setAmountReceived(parseFloat(e.target.value) || 0)}
-            placeholder="Enter amount"
-            className="w-full px-2 py-1 border border-primary-200 rounded bg-primary-50 text-primary-900 text-right text-[10px] focus:outline-none focus:ring-1 focus:ring-primary-500 focus:bg-white"
-          />
+      {/* Payment Method Selection */}
+      <div className="mb-3 flex-shrink-0">
+        <h3 className="text-xs font-semibold text-primary-700 mb-2">Select Payment Method</h3>
+        <div className="grid grid-cols-2 gap-2">
+          {paymentMethods.map((method) => (
+            <button
+              key={method.id}
+              onClick={() => setSelectedPaymentMethod(method.id)}
+              className={`flex items-center justify-center gap-2 p-2 rounded-lg border-2 transition-colors ${
+                selectedPaymentMethod === method.id
+                  ? 'border-primary-500 bg-primary-50 text-primary-700'
+                  : 'border-primary-200 bg-white text-primary-600 hover:bg-primary-50'
+              }`}
+            >
+              <span className="text-lg">{method.icon}</span>
+              <span className="text-xs font-semibold">{method.name}</span>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -132,7 +143,7 @@ export default function Cart({ onCheckout }: CartProps) {
       <div className="space-y-2 flex-shrink-0">
         <button
           onClick={handleCheckout}
-          disabled={items.length === 0 || amountReceived < total || isProcessing}
+          disabled={items.length === 0 || isProcessing}
           className="w-full bg-primary-500 text-white font-semibold py-2.5 rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
         >
           {isProcessing ? 'Completing Sale...' : 'Complete Sale'}

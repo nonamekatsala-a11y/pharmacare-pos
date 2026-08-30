@@ -48,14 +48,9 @@ export default function POSPage() {
     }
   }
 
-  const handleCheckout = async (amountReceived: number): Promise<void> => {
+  const handleCheckout = async (total: number, paymentMethod: string): Promise<void> => {
     if (cartItems.length === 0 || !user) {
       setError('Cart is empty or user not authenticated')
-      return
-    }
-
-    if (amountReceived < getTotal()) {
-      setError('Insufficient amount received')
       return
     }
 
@@ -65,8 +60,6 @@ export default function POSPage() {
       const invoiceNumber = `INV-${Date.now()}`
       const subtotal = getSubtotal()
       const tax = getTax()
-      const total = getTotal()
-      const change = amountReceived - total
 
       // Create checkout request
       const checkoutRequest = {
@@ -77,8 +70,8 @@ export default function POSPage() {
         })),
         invoiceNumber,
         saleDate: new Date().toISOString(),
-        amountReceived,
-        paymentMethod: 'Cash' as const,
+        amountReceived: total,
+        paymentMethod: paymentMethod as 'Cash' | 'Mpamba' | 'Airtel Money' | 'Bank Transfer',
       }
 
       await saleService.create(checkoutRequest)
@@ -106,9 +99,9 @@ export default function POSPage() {
         subtotal,
         taxAmount: tax,
         total,
-        amountReceived,
-        change: Math.max(0, change),
-        paymentMethod: 'Cash',
+        amountReceived: total,
+        change: 0,
+        paymentMethod: paymentMethod as 'Cash' | 'Mpamba' | 'Airtel Money' | 'Bank Transfer',
       }
 
       setReceiptData(newReceiptData)
