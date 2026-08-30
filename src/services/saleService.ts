@@ -20,7 +20,7 @@ export interface Sale {
   discount: number
   tax: number
   total: number
-  paymentMethod: 'Cash' | 'Card' | 'Credit'
+  paymentMethod: 'Cash' | 'Card' | 'Credit' | 'Mpamba' | 'Airtel Money' | 'Bank Transfer'
   status: 'Completed' | 'Refunded'
   items: SaleItem[]
   createdAt: string
@@ -44,7 +44,7 @@ export interface CheckoutRequest {
   invoiceNumber: string
   saleDate: string
   amountReceived: number
-  paymentMethod: 'Cash' | 'Card' | 'Credit'
+  paymentMethod: 'Cash' | 'Card' | 'Credit' | 'Mpamba' | 'Airtel Money' | 'Bank Transfer'
   customerId?: string
 }
 
@@ -240,6 +240,15 @@ export const saleService = {
 
     if (!pharmacyId || !user) throw new Error('No pharmacy is selected for this sale.')
 
+    // Map custom payment methods to database-supported ones
+    const paymentMethodMapping: Record<string, 'Cash' | 'Card' | 'Credit'> = {
+      'Cash': 'Cash',
+      'Mpamba': 'Card',
+      'Airtel Money': 'Card',
+      'Bank Transfer': 'Credit',
+    }
+    const dbPaymentMethod = paymentMethodMapping[sale.paymentMethod] || 'Cash'
+
     const medicineIds = [...new Set(sale.items.map((item) => item.medicineId))]
     const supabase = getSupabaseClient()
     const { data: inventoryRows, error: inventoryError } = await supabase
@@ -270,7 +279,7 @@ export const saleService = {
         discount: 0,
         tax: 0,
         total: subtotal,
-        payment_method: sale.paymentMethod,
+        payment_method: dbPaymentMethod,
         status: 'Completed',
       })
       .select('id, invoice_number, user_id, customer_id, sale_date, subtotal, discount, tax, total, payment_method, status, created_at')

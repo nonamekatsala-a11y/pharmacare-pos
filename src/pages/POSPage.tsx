@@ -71,7 +71,7 @@ export default function POSPage() {
         invoiceNumber,
         saleDate: new Date().toISOString(),
         amountReceived: total,
-        paymentMethod: paymentMethod as 'Cash' | 'Card' | 'Credit',
+        paymentMethod: paymentMethod as 'Cash' | 'Card' | 'Credit' | 'Mpamba' | 'Airtel Money' | 'Bank Transfer',
       }
 
       await saleService.create(checkoutRequest)
@@ -101,7 +101,7 @@ export default function POSPage() {
         total,
         amountReceived: total,
         change: 0,
-        paymentMethod: paymentMethod as 'Cash' | 'Card' | 'Credit',
+        paymentMethod: paymentMethod as 'Cash' | 'Card' | 'Credit' | 'Mpamba' | 'Airtel Money' | 'Bank Transfer',
       }
 
       setReceiptData(newReceiptData)

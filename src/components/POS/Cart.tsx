@@ -17,8 +17,9 @@ export default function Cart({ onCheckout }: CartProps) {
 
   const paymentMethods = [
     { id: 'Cash', name: 'Cash', icon: '💵' },
-    { id: 'Card', name: 'Card', icon: '�' },
-    { id: 'Credit', name: 'Credit', icon: '📋' },
+    { id: 'Mpamba', name: 'Mpamba', icon: '📱' },
+    { id: 'Airtel Money', name: 'Airtel Money', icon: '📱' },
+    { id: 'Bank Transfer', name: 'Bank Transfer', icon: '🏦' },
   ]
 
   const handleRemove = (medicineId: string) => {
