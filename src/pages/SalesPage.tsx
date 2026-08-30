@@ -1,26 +1,20 @@
 import { useState, useEffect } from 'react'
-import { saleService, Sale, DailySale, MonthlySale, MedicineSale } from '@services/saleService'
+import { saleService, MedicineSale } from '@services/saleService'
 import { setAdminPharmacyOverride } from '@services/medicineService'
 import { useAuthStore } from '@store/authStore'
-import DailySales from '@components/Sales/DailySales'
-import MonthlySales from '@components/Sales/MonthlySales'
-import SalesByMedicine from '@components/Sales/SalesByMedicine'
-import RecentSales from '@components/Sales/RecentSales'
 import { formatCurrency, formatDate } from '@utils/formatters'
-import Button from '@components/Common/Button'
 import { PHARMACIES } from '@config/pharmacyConfig'
 import AdminPharmacySelector from '@components/Admin/AdminPharmacySelector'
-import SaleDetailModal from '@components/Common/SaleDetailModal'
 import type { Pharmacy } from '@config/pharmacyConfig'
 
 export default function SalesPage() {
   const { user, selectedPharmacy } = useAuthStore()
   const [isLoading, setIsLoading] = useState(true)
-  const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'this-month' | 'last30days'>('all')
+  const [dateFilter, setDateFilter] = useState<'today' | 'this-month' | 'custom'>('today')
   const [customDateRange, setCustomDateRange] = useState<{ from: string; to: string } | null>(null)
   const [adminSelectedPharmacy, setAdminSelectedPharmacy] = useState<Pharmacy | null>(null)
-  const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
-  const [isSaleDetailModalOpen, setIsSaleDetailModalOpen] = useState(false)
+  const [medicineTab, setMedicineTab] = useState<'today' | 'month'>('today')
+  const [searchTerm, setSearchTerm] = useState('')
 
   // Initialize admin pharmacy selection
   useEffect(() => {
@@ -45,15 +39,12 @@ export default function SalesPage() {
   
   // Analytics data
   const [totalRevenue, setTotalRevenue] = useState(0)
-  const [totalOrders, setTotalOrders] = useState(0)
-  const [dailySales, setDailySales] = useState<DailySale[]>([])
-  const [monthlySales, setMonthlySales] = useState<MonthlySale[]>([])
+  const [salesByPaymentMethod, setSalesByPaymentMethod] = useState<{ method: string; amount: number; percentage: number }[]>([])
   const [salesByMedicine, setSalesByMedicine] = useState<MedicineSale[]>([])
-  const [recentSales, setRecentSales] = useState<Sale[]>([])
 
   useEffect(() => {
     loadSalesData()
-  }, [dateFilter, customDateRange, adminSelectedPharmacy])
+  }, [dateFilter, customDateRange, adminSelectedPharmacy, medicineTab])
 
   const loadSalesData = async () => {
     try {
@@ -74,23 +65,29 @@ export default function SalesPage() {
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
         fromDate = formatDate(startOfMonth)
         toDate = formatDate(today)
-      } else if (dateFilter === 'last30days') {
-        const today = new Date()
-        const thirtyDaysAgo = new Date(today)
-        thirtyDaysAgo.setDate(today.getDate() - 30)
-        fromDate = formatDate(thirtyDaysAgo)
-        toDate = formatDate(today)
       }
 
-      // Load all analytics data in parallel
-      const [dailyData, monthlyData, medicineData, allSales] = await Promise.all([
-        saleService.getDailySales(fromDate, toDate),
-        saleService.getMonthlySales(fromDate, toDate),
-        saleService.getSalesByMedicine(fromDate, toDate),
+      // Load medicine sales data based on tab
+      let medicineFromDate: string | undefined
+      let medicineToDate: string | undefined
+
+      if (medicineTab === 'today') {
+        const today = new Date().toISOString().split('T')[0]
+        medicineFromDate = today
+        medicineToDate = today
+      } else {
+        const today = new Date()
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+        medicineFromDate = formatDate(startOfMonth)
+        medicineToDate = formatDate(today)
+      }
+
+      const [allSales, medicineData] = await Promise.all([
         saleService.getAll(),
+        saleService.getSalesByMedicine(medicineFromDate, medicineToDate),
       ])
 
-      // Filter recent sales based on date range
+      // Filter sales based on date range
       let filteredSales = allSales
       if (fromDate && toDate) {
         const from = new Date(fromDate)
@@ -102,16 +99,22 @@ export default function SalesPage() {
         })
       }
 
-      // Calculate totals
+      // Calculate totals by payment method
       const revenue = filteredSales.reduce((sum, s) => sum + s.total, 0)
-      const orders = filteredSales.length
+      const paymentMethodTotals = filteredSales.reduce((acc, sale) => {
+        acc[sale.paymentMethod] = (acc[sale.paymentMethod] || 0) + sale.total
+        return acc
+      }, {} as Record<string, number>)
 
-      setDailySales(dailyData)
-      setMonthlySales(monthlyData)
-      setSalesByMedicine(medicineData)
-      setRecentSales(filteredSales.slice(0, 10)) // Last 10 sales
+      const paymentMethodData = Object.entries(paymentMethodTotals).map(([method, amount]) => ({
+        method,
+        amount,
+        percentage: revenue > 0 ? (amount / revenue) * 100 : 0
+      }))
+
       setTotalRevenue(revenue)
-      setTotalOrders(orders)
+      setSalesByPaymentMethod(paymentMethodData)
+      setSalesByMedicine(medicineData)
     } catch (error) {
       console.error('Failed to load sales data:', error)
     } finally {
@@ -119,47 +122,27 @@ export default function SalesPage() {
     }
   }
 
-  const handleFilterChange = (filter: 'all' | 'today' | 'this-month' | 'last30days') => {
+  const handleFilterChange = (filter: 'today' | 'this-month' | 'custom') => {
     setDateFilter(filter)
-    setCustomDateRange(null)
+    if (filter !== 'custom') {
+      setCustomDateRange(null)
+    }
   }
 
   const handleCustomDateSubmit = () => {
     if (customDateRange?.from && customDateRange?.to) {
-      setDateFilter('all')
       loadSalesData()
     }
   }
 
-  const handleResetSales = () => {
-    setDateFilter('all')
-    setCustomDateRange(null)
-    loadSalesData()
+  const handleExport = () => {
+    // Export functionality placeholder
+    console.log('Exporting data...')
   }
 
-  const handleEditSale = async (saleId: string) => {
-    try {
-      const sale = await saleService.getById(saleId)
-      setSelectedSale(sale)
-      setIsSaleDetailModalOpen(true)
-    } catch (error) {
-      console.error('Failed to load sale details:', error)
-    }
-  }
-
-  const handleSaveSale = async (updatedSale: Sale) => {
-    try {
-      const savedSale = await saleService.update(updatedSale.id, updatedSale)
-      await loadSalesData()
-      setSelectedSale(savedSale)
-    } catch (error) {
-      console.error('Failed to update sale:', error)
-      alert('Failed to update sale. Please try again.')
-    }
-  }
-
-  // Only allow admins to edit sales
-  const canEditSales = user?.role === 'Admin'
+  const filteredMedicines = salesByMedicine.filter(medicine =>
+    medicine.productName.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   if (isLoading) {
     return <div className="p-8">Loading sales data...</div>
@@ -172,68 +155,63 @@ export default function SalesPage() {
         <div className="flex items-center justify-between mb-2">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Sales Report</h1>
-            <p className="mt-2 text-gray-600">Review revenue trends, order volume and top selling medicines.</p>
+            <p className="mt-2 text-gray-600">Review revenue trends, payment methods and medicines sold.</p>
           </div>
-          {user?.role === 'Admin' && (
-            <AdminPharmacySelector
-              selectedPharmacy={adminSelectedPharmacy}
-              onPharmacySelect={handleAdminPharmacyChange}
-            />
-          )}
+          <div className="flex items-center gap-4">
+            {user?.role === 'Admin' && (
+              <AdminPharmacySelector
+                selectedPharmacy={adminSelectedPharmacy}
+                onPharmacySelect={handleAdminPharmacyChange}
+              />
+            )}
+            <button className="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors">
+              Ask Gemini
+            </button>
+          </div>
         </div>
-        {user?.role === 'Admin' && currentPharmacy && (
+        {currentPharmacy && (
           <div className="flex items-center gap-2 text-sm text-primary-600 bg-primary-50 px-3 py-1.5 rounded-lg inline-flex">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-            <span>Viewing: <strong>{currentPharmacy.name}</strong></span>
+            <span>{currentPharmacy.name}</span>
           </div>
         )}
       </div>
 
-      {/* Filters and Summary Cards */}
+      {/* Date Range Selection */}
       <div className="mb-6">
-        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
-          {/* Summary Cards */}
-          <div className="flex gap-3 sm:gap-4">
-            <div className="rounded-lg bg-white border border-gray-200 p-3 sm:p-4 md:p-6 shadow-sm min-w-[120px] sm:min-w-[150px] md:min-w-[180px]">
-              <p className="text-xs sm:text-sm text-gray-600 truncate">Total Revenue</p>
-              <p className="mt-1 sm:mt-2 text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">
-                {formatCurrency(totalRevenue)}
-              </p>
-            </div>
-            <div className="rounded-lg bg-white border border-gray-200 p-3 sm:p-4 md:p-6 shadow-sm min-w-[120px] sm:min-w-[150px] md:min-w-[180px]">
-              <p className="text-xs sm:text-sm text-gray-600 truncate">Orders</p>
-              <p className="mt-1 sm:mt-2 text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">{totalOrders.toLocaleString()}</p>
-            </div>
-          </div>
-
-          {/* Date Filters */}
-          <div className="flex flex-col items-end gap-2">
-            <div className="flex gap-2">
-              <Button
-                variant="primary"
-                onClick={() => handleFilterChange('today')}
-                className={dateFilter === 'today' ? 'bg-primary-600' : ''}
-              >
-                Today
-              </Button>
-              <Button
-                variant="primary"
-                onClick={() => handleFilterChange('this-month')}
-                className={dateFilter === 'this-month' ? 'bg-primary-600' : ''}
-              >
-                This Month
-              </Button>
-              <Button
-                variant="primary"
-                onClick={() => handleFilterChange('last30days')}
-                className={dateFilter === 'last30days' ? 'bg-primary-600' : ''}
-              >
-                Last 30 Days
-              </Button>
-            </div>
-            <div className="flex gap-2 items-center">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleFilterChange('today')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              dateFilter === 'today' 
+                ? 'bg-primary-500 text-white' 
+                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            Today
+          </button>
+          <button
+            onClick={() => handleFilterChange('this-month')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              dateFilter === 'this-month' 
+                ? 'bg-primary-500 text-white' 
+                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            This Month
+          </button>
+          <button
+            onClick={() => handleFilterChange('custom')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              dateFilter === 'custom' 
+                ? 'bg-primary-500 text-white' 
+                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            Custom Range
+          </button>
+          
+          {dateFilter === 'custom' && (
+            <div className="flex items-center gap-2 ml-4">
               <input
                 type="date"
                 value={customDateRange?.from || ''}
@@ -246,43 +224,120 @@ export default function SalesPage() {
                 onChange={(e) => setCustomDateRange({ from: customDateRange?.from || '', to: e.target.value })}
                 className="rounded-lg border border-gray-300 px-3 py-2 text-gray-700 focus:border-primary-500 focus:outline-none"
               />
-              <Button variant="primary" onClick={handleCustomDateSubmit}>
+              <button
+                onClick={handleCustomDateSubmit}
+                className="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors"
+              >
                 Apply
-              </Button>
-              <Button variant="danger" onClick={handleResetSales}>
-                Reset
-              </Button>
+              </button>
             </div>
+          )}
+        </div>
+      </div>
+
+      {/* Sales Summary Cards */}
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Sales Summary</h2>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          {/* Total Sales */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+            <p className="text-sm text-gray-600">Total Sales</p>
+            <p className="mt-2 text-2xl font-bold text-gray-900">{formatCurrency(totalRevenue)}</p>
+            <p className="text-xs text-gray-500 mt-1">Total revenue</p>
           </div>
+          
+          {/* Payment Method Cards */}
+          {salesByPaymentMethod.map((item) => (
+            <div key={item.method} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+              <p className="text-sm text-gray-600">{item.method}</p>
+              <p className="mt-2 text-2xl font-bold text-gray-900">{formatCurrency(item.amount)}</p>
+              <p className="text-xs text-gray-500 mt-1">{item.percentage.toFixed(1)}% of total</p>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Left Column - Daily and Monthly Sales */}
-        <div className="lg:col-span-2 space-y-6">
-          <DailySales dailySales={dailySales} />
-          <MonthlySales monthlySales={monthlySales} />
+      {/* Medicines Sold Section */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Medicines Sold</h2>
+        </div>
+        
+        {/* Tabs */}
+        <div className="flex items-center gap-2 mb-4">
+          <button
+            onClick={() => setMedicineTab('today')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              medicineTab === 'today' 
+                ? 'bg-primary-500 text-white' 
+                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            Today's Sales
+          </button>
+          <button
+            onClick={() => setMedicineTab('month')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              medicineTab === 'month' 
+                ? 'bg-primary-500 text-white' 
+                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            This Month's Sales
+          </button>
         </div>
 
-        {/* Right Column - Recent Sales and Sales by Medicine */}
-        <div className="lg:col-span-3 space-y-6">
-          <RecentSales recentSales={recentSales} onEdit={canEditSales ? handleEditSale : undefined} />
-          <SalesByMedicine salesByMedicine={salesByMedicine} onEdit={canEditSales ? handleEditSale : undefined} />
+        {/* Search and Export */}
+        <div className="flex items-center justify-between mb-4">
+          <input
+            type="text"
+            placeholder="Search medicine..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="rounded-lg border border-gray-300 px-4 py-2 text-gray-700 focus:border-primary-500 focus:outline-none w-64"
+          />
+          <button
+            onClick={handleExport}
+            className="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Export
+          </button>
+        </div>
+
+        {/* Medicine Sales Table */}
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">#</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Medicine Name</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Quantity Sold</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Unit Price</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Total Amount</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {filteredMedicines.map((medicine, index) => (
+                <tr key={medicine.medicineId} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-sm text-gray-700">{index + 1}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900 font-medium">{medicine.productName}</td>
+                  <td className="px-4 py-3 text-sm text-gray-700">{medicine.quantity}</td>
+                  <td className="px-4 py-3 text-sm text-gray-700">{formatCurrency(medicine.revenue / medicine.quantity)}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900 font-semibold">{formatCurrency(medicine.revenue)}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot className="bg-gray-50 border-t border-gray-200">
+              <tr>
+                <td colSpan={4} className="px-4 py-3 text-sm font-semibold text-gray-700">Total</td>
+                <td className="px-4 py-3 text-sm font-bold text-gray-900">
+                  {formatCurrency(filteredMedicines.reduce((sum, m) => sum + m.revenue, 0))}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       </div>
-
-      {/* Sale Detail Modal */}
-      <SaleDetailModal
-        sale={selectedSale}
-        isOpen={isSaleDetailModalOpen}
-        onClose={() => {
-          setIsSaleDetailModalOpen(false)
-          setSelectedSale(null)
-        }}
-        onSave={handleSaveSale}
-        isAdmin={canEditSales}
-      />
     </div>
   )
 }
