@@ -82,12 +82,8 @@ export default function MedicineSelector({ medicines, isLoading }: MedicineSelec
             </div>
           </div>
 
-          {/* Popular Medicines / Search Results */}
+          {/* Medicines List */}
           <div className="flex-1 overflow-y-auto">
-            <h3 className="text-sm font-semibold text-primary-700 mb-2">
-              {searchTerm ? 'Search Results' : 'Popular Medicines'}
-            </h3>
-            
             {filteredMedicines.length === 0 ? (
               <div className="text-center text-primary-600 text-sm py-4">
                 {medicines.length === 0 ? 'No stock is available for this pharmacy' : 'No non-expired medicine found'}
