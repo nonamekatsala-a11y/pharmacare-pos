@@ -142,16 +142,11 @@ export default function Receipt({ isOpen, data, onClose }: ReceiptProps) {
               <div className="mb-2 space-y-1 text-left">
                 {data.items.map((item, index) => (
                   <div key={`${item.medicineId}-${index}`} className="text-xs">
-                    {/* Item Name */}
-                    <div className="mb-0.5">
-                      <p className="font-bold text-primary-700 truncate">{item.medicineName}</p>
-                    </div>
-
-                    {/* Item Details Grid */}
-                    <div className="grid grid-cols-12 gap-1 text-primary-600">
-                      <div className="col-span-4"></div>
-                      <div className="col-span-2 text-right font-semibold">{item.quantity}</div>
-                      <div className="col-span-3 text-right">{formatCurrency(item.unitPrice)}</div>
+                    {/* Item on single line */}
+                    <div className="grid grid-cols-12 gap-1 items-center">
+                      <div className="col-span-4 font-bold text-primary-700 truncate">{item.medicineName}</div>
+                      <div className="col-span-2 text-right font-semibold text-primary-600">{item.quantity}</div>
+                      <div className="col-span-3 text-right text-primary-600">{formatCurrency(item.unitPrice)}</div>
                       <div className="col-span-3 text-right font-bold text-primary-700">{formatCurrency(item.total)}</div>
                     </div>
                   </div>
