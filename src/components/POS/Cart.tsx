@@ -34,6 +34,20 @@ export default function Cart({ onCheckout }: CartProps) {
     }
   }
 
+  const handleIncrement = (medicineId: string, currentQuantity: number, maxStock: number) => {
+    if (currentQuantity < maxStock) {
+      updateQuantity(medicineId, currentQuantity + 1)
+    }
+  }
+
+  const handleDecrement = (medicineId: string, currentQuantity: number) => {
+    if (currentQuantity > 1) {
+      updateQuantity(medicineId, currentQuantity - 1)
+    } else {
+      handleRemove(medicineId)
+    }
+  }
+
   const handleCheckout = async () => {
     setIsProcessing(true)
     try {
@@ -80,13 +94,22 @@ export default function Cart({ onCheckout }: CartProps) {
                     <p className="font-semibold text-primary-700 text-xs truncate">{item.medicineName}</p>
                   </td>
                   <td className="px-3 py-2 text-center">
-                    <input
-                      type="number"
-                      value={item.quantity}
-                      onChange={(e) => handleQuantityChange(item.medicineId, parseInt(e.target.value) || 0)}
-                      min="1"
-                      className="w-16 px-2 py-1 border border-primary-200 rounded bg-white text-primary-700 text-xs text-center focus:outline-none focus:ring-1 focus:ring-primary-500"
-                    />
+                    <div className="flex items-center justify-center gap-1">
+                      <button
+                        onClick={() => handleDecrement(item.medicineId, item.quantity)}
+                        className="w-6 h-6 bg-primary-100 text-primary-700 rounded hover:bg-primary-200 transition-colors text-sm font-bold"
+                      >
+                        -
+                      </button>
+                      <span className="w-8 text-center text-sm font-semibold text-primary-700">{item.quantity}</span>
+                      <button
+                        onClick={() => handleIncrement(item.medicineId, item.quantity, item.maxStock)}
+                        disabled={item.quantity >= item.maxStock}
+                        className="w-6 h-6 bg-primary-100 text-primary-700 rounded hover:bg-primary-200 transition-colors text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        +
+                      </button>
+                    </div>
                   </td>
                   <td className="px-3 py-2 text-right text-xs text-primary-700">{formatCurrency(item.unitPrice)}</td>
                   <td className="px-3 py-2 text-right text-xs font-bold text-primary-700">{formatCurrency(item.total)}</td>
