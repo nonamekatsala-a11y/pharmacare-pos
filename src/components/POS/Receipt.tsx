@@ -131,47 +131,28 @@ export default function Receipt({ isOpen, data, onClose }: ReceiptProps) {
           <div className="flex-1 overflow-y-auto">
             <div ref={receiptRef} className="p-6 font-mono text-sm">
               {/* Receipt Header - Professional Style */}
-              <div className="text-center mb-6 pb-4 border-b-2 border-primary-300">
-                <h3 className="text-lg font-bold text-primary-700 mb-1">{data.pharmacyName}</h3>
-                <p className="text-xs text-primary-600">Medicine Store POS System</p>
+              <div className="text-center mb-4 pb-2 border-b-2 border-primary-300">
+                <h3 className="text-lg font-bold text-primary-700">{data.pharmacyName}</h3>
               </div>
 
               {/* Invoice Details */}
-              <div className="mb-4 pb-4 border-b border-primary-200">
+              <div className="mb-3 pb-2 border-b border-primary-200">
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-primary-600">Invoice:</span>
                   <span className="font-bold text-primary-700">{data.invoiceNumber}</span>
                 </div>
-                <div className="flex justify-between text-xs mb-1">
+                <div className="flex justify-between text-xs">
                   <span className="text-primary-600">Date:</span>
                   <span className="text-primary-700">{formatDate(data.timestamp)}</span>
-                </div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-primary-600">Time:</span>
-                  <span className="text-primary-700">{formatTime(data.timestamp)}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-primary-600">Cashier:</span>
-                  <span className="text-primary-700">{data.cashierName}</span>
-                </div>
-              </div>
-
-              {/* Items Header */}
-              <div className="mb-2 pb-2 border-b border-primary-200">
-                <div className="grid grid-cols-12 gap-1 text-xs font-bold text-primary-600">
-                  <div className="col-span-4">Item</div>
-                  <div className="col-span-2 text-right">Qty</div>
-                  <div className="col-span-3 text-right">Price</div>
-                  <div className="col-span-3 text-right">Total</div>
                 </div>
               </div>
 
               {/* Items List */}
-              <div className="mb-4 space-y-2">
+              <div className="mb-3 space-y-1">
                 {data.items.map((item, index) => (
                   <div key={`${item.medicineId}-${index}`} className="text-xs">
                     {/* Item Name */}
-                    <div className="mb-1">
+                    <div className="mb-0.5">
                       <p className="font-bold text-primary-700 truncate">{item.medicineName}</p>
                     </div>
 
@@ -182,70 +163,36 @@ export default function Receipt({ isOpen, data, onClose }: ReceiptProps) {
                       <div className="col-span-3 text-right">{formatCurrency(item.unitPrice)}</div>
                       <div className="col-span-3 text-right font-bold text-primary-700">{formatCurrency(item.total)}</div>
                     </div>
-
-                    {/* Tax Info if applicable */}
-                    {item.taxRate > 0 && (
-                      <div className="grid grid-cols-12 gap-1 text-xs text-primary-500 mt-0.5">
-                        <div className="col-span-6"></div>
-                        <div className="col-span-6 text-right">
-                          Tax ({(item.taxRate * 100).toFixed(0)}%): {formatCurrency(item.total * item.taxRate)}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
 
               {/* Divider */}
-              <div className="border-b-2 border-primary-300 my-4"></div>
+              <div className="border-b-2 border-primary-300 my-3"></div>
 
               {/* Totals Section */}
-              <div className="space-y-2 mb-4 text-xs">
-                {/* Subtotal */}
-                <div className="flex justify-between">
-                  <span className="text-primary-600">Subtotal:</span>
-                  <span className="text-primary-700">{formatCurrency(data.subtotal)}</span>
-                </div>
-
-                {/* Tax Amount */}
-                {data.taxAmount > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-primary-600">Tax:</span>
-                    <span className="text-primary-700">{formatCurrency(data.taxAmount)}</span>
-                  </div>
-                )}
-
+              <div className="space-y-1 mb-3 text-xs">
                 {/* Total (Highlighted) */}
-                <div className="border-t border-primary-200 pt-2 mt-2 flex justify-between font-bold text-sm bg-primary-50 p-2 rounded">
+                <div className="flex justify-between font-bold text-sm bg-primary-50 p-2 rounded">
                   <span className="text-primary-700">TOTAL:</span>
                   <span className="text-primary-700">{formatCurrency(data.total)}</span>
                 </div>
               </div>
 
               {/* Divider */}
-              <div className="border-b-2 border-primary-300 my-4"></div>
+              <div className="border-b-2 border-primary-300 my-3"></div>
 
               {/* Payment Section */}
-              <div className="space-y-2 mb-4 text-xs bg-green-50 p-3 rounded border border-green-200">
+              <div className="space-y-1 mb-3 text-xs bg-green-50 p-2 rounded border border-green-200">
                 <div className="flex justify-between">
-                  <span className="text-primary-600">Payment Method:</span>
+                  <span className="text-primary-600">Payment:</span>
                   <span className="font-bold text-primary-700">{data.paymentMethod || 'Cash'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-primary-600">Amount Received:</span>
-                  <span className="font-bold text-primary-700">{formatCurrency(data.amountReceived)}</span>
-                </div>
-                <div className="flex justify-between font-bold text-sm text-green-700">
-                  <span>Change:</span>
-                  <span>{formatCurrency(data.change)}</span>
                 </div>
               </div>
 
               {/* Footer */}
-              <div className="text-center text-xs text-primary-600 space-y-1 pt-4 border-t border-primary-200">
+              <div className="text-center text-xs text-primary-600 pt-2 border-t border-primary-200">
                 <p>Thank you for your purchase!</p>
-                <p className="text-primary-500 text-xs">Please keep this receipt for your records</p>
-                <p className="text-primary-400 text-xs mt-2">Generated by MyNeen POS System</p>
               </div>
             </div>
           </div>
