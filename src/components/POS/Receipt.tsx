@@ -129,14 +129,14 @@ export default function Receipt({ isOpen, data, onClose }: ReceiptProps) {
 
           {/* Receipt Content - Scrollable */}
           <div className="flex-1 overflow-y-auto">
-            <div ref={receiptRef} className="p-6 font-mono text-sm">
+            <div ref={receiptRef} className="p-6 font-mono text-sm text-left">
               {/* Receipt Header - Professional Style */}
-              <div className="text-center mb-4 pb-2 border-b-2 border-primary-300">
+              <div className="mb-3 pb-2 border-b-2 border-primary-300">
                 <h3 className="text-lg font-bold text-primary-700">{data.pharmacyName}</h3>
               </div>
 
               {/* Invoice Details */}
-              <div className="mb-3 pb-2 border-b border-primary-200">
+              <div className="mb-2 pb-2 border-b border-primary-200">
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-primary-600">Invoice:</span>
                   <span className="font-bold text-primary-700">{data.invoiceNumber}</span>
@@ -148,7 +148,7 @@ export default function Receipt({ isOpen, data, onClose }: ReceiptProps) {
               </div>
 
               {/* Items List */}
-              <div className="mb-3 space-y-1">
+              <div className="mb-2 space-y-1">
                 {data.items.map((item, index) => (
                   <div key={`${item.medicineId}-${index}`} className="text-xs">
                     {/* Item Name */}
@@ -168,10 +168,10 @@ export default function Receipt({ isOpen, data, onClose }: ReceiptProps) {
               </div>
 
               {/* Divider */}
-              <div className="border-b-2 border-primary-300 my-3"></div>
+              <div className="border-b-2 border-primary-300 my-2"></div>
 
               {/* Totals Section */}
-              <div className="space-y-1 mb-3 text-xs">
+              <div className="space-y-1 mb-2 text-xs">
                 {/* Total (Highlighted) */}
                 <div className="flex justify-between font-bold text-sm bg-primary-50 p-2 rounded">
                   <span className="text-primary-700">TOTAL:</span>
@@ -180,10 +180,10 @@ export default function Receipt({ isOpen, data, onClose }: ReceiptProps) {
               </div>
 
               {/* Divider */}
-              <div className="border-b-2 border-primary-300 my-3"></div>
+              <div className="border-b-2 border-primary-300 my-2"></div>
 
               {/* Payment Section */}
-              <div className="space-y-1 mb-3 text-xs bg-green-50 p-2 rounded border border-green-200">
+              <div className="space-y-1 mb-2 text-xs bg-green-50 p-2 rounded border border-green-200">
                 <div className="flex justify-between">
                   <span className="text-primary-600">Payment:</span>
                   <span className="font-bold text-primary-700">{data.paymentMethod || 'Cash'}</span>
@@ -191,7 +191,7 @@ export default function Receipt({ isOpen, data, onClose }: ReceiptProps) {
               </div>
 
               {/* Footer */}
-              <div className="text-center text-xs text-primary-600 pt-2 border-t border-primary-200">
+              <div className="text-left text-xs text-primary-600 pt-2 border-t border-primary-200">
                 <p>Thank you for your purchase!</p>
               </div>
             </div>
