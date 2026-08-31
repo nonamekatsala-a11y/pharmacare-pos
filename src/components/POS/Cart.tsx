@@ -26,14 +26,6 @@ export default function Cart({ onCheckout }: CartProps) {
     removeItem(medicineId)
   }
 
-  const handleQuantityChange = (medicineId: string, quantity: number) => {
-    if (quantity <= 0) {
-      handleRemove(medicineId)
-    } else {
-      updateQuantity(medicineId, quantity)
-    }
-  }
-
   const handleIncrement = (medicineId: string, currentQuantity: number, maxStock: number) => {
     if (currentQuantity < maxStock) {
       updateQuantity(medicineId, currentQuantity + 1)
