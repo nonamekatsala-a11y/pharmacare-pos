@@ -575,6 +575,19 @@ export const warehouseService = {
   updateItem: async (id: string, updates: Partial<WarehouseItem>): Promise<WarehouseItem> => {
     const supabase = getSupabaseClient()
 
+    // First, get the current warehouse item to get the medicine name
+    const { data: currentItem, error: fetchError } = await supabase
+      .from('warehouse_items')
+      .select('medicine_name, medicine_id')
+      .eq('id', id)
+      .single()
+
+    if (fetchError) throw fetchError
+
+    const medicineName = currentItem.medicine_name
+    const medicineId = currentItem.medicine_id
+
+    // Update the warehouse item
     const { data, error } = await supabase
       .from('warehouse_items')
       .update({
@@ -589,6 +602,33 @@ export const warehouseService = {
       .single()
 
     if (error) throw error
+
+    // Update all pharmacy inventory records with the same medicine name
+    if (updates.purchasePrice !== undefined || updates.sellingPrice !== undefined) {
+      const updateData: any = {}
+      if (updates.purchasePrice !== undefined) {
+        updateData.purchase_price = updates.purchasePrice
+      }
+      if (updates.sellingPrice !== undefined) {
+        updateData.selling_price = updates.sellingPrice
+      }
+
+      // Update by medicine name (most reliable way to match across pharmacies)
+      if (medicineName) {
+        await supabase
+          .from('pharmacy_inventory')
+          .update(updateData)
+          .eq('medicine_name', medicineName)
+      }
+
+      // Also update by medicine_id if available
+      if (medicineId) {
+        await supabase
+          .from('pharmacy_inventory')
+          .update(updateData)
+          .eq('medicine_id', medicineId)
+      }
+    }
 
     return mapWarehouseItem(data as WarehouseRow)
   },
