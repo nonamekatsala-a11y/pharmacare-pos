@@ -575,16 +575,16 @@ export const warehouseService = {
   updateItem: async (id: string, updates: Partial<WarehouseItem>): Promise<WarehouseItem> => {
     const supabase = getSupabaseClient()
 
-    // First, get the current warehouse item to get the medicine name
+    // First, get the current warehouse item with medicine relationship to get the medicine name
     const { data: currentItem, error: fetchError } = await supabase
       .from('warehouse_items')
-      .select('medicine_name, medicine_id')
+      .select('medicine_id, medicines(medicine_name)')
       .eq('id', id)
       .single()
 
     if (fetchError) throw fetchError
 
-    const medicineName = currentItem.medicine_name
+    const medicineName = currentItem.medicines?.medicine_name
     const medicineId = currentItem.medicine_id
 
     // Update the warehouse item
