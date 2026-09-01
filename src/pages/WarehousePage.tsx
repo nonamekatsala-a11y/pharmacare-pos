@@ -26,8 +26,14 @@ export default function WarehousePage() {
   const [isAllocateModalOpen, setIsAllocateModalOpen] = useState(false)
   const [selectedWarehouseItem, setSelectedWarehouseItem] = useState<WarehouseItem | null>(null)
   const [isRestockModalOpen, setIsRestockModalOpen] = useState(false)
+  const [isUpdatePriceModalOpen, setIsUpdatePriceModalOpen] = useState(false)
   const [restockQuantity, setRestockQuantity] = useState('')
   const [restockMessage, setRestockMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const [updatePriceFormData, setUpdatePriceFormData] = useState({
+    purchasePrice: '',
+    sellingPrice: '',
+  })
+  const [updatePriceMessage, setUpdatePriceMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     type: 'item' | 'allocation'
     id: string
@@ -137,6 +143,30 @@ export default function WarehousePage() {
     } catch (error: any) {
       console.error('Failed to add warehouse stock:', error)
       setRestockMessage({ type: 'error', text: error.message || 'Failed to add stock' })
+    }
+  }
+
+  const handleUpdatePrice = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedWarehouseItem) return
+    setUpdatePriceMessage(null)
+
+    try {
+      await warehouseService.updateItem(selectedWarehouseItem.id, {
+        purchasePrice: parseFloat(updatePriceFormData.purchasePrice),
+        sellingPrice: parseFloat(updatePriceFormData.sellingPrice),
+      })
+      setUpdatePriceFormData({ purchasePrice: '', sellingPrice: '' })
+      setSelectedWarehouseItem(null)
+      setIsUpdatePriceModalOpen(false)
+      setUpdatePriceMessage({ type: 'success', text: 'Price updated successfully!' })
+      await loadData()
+      setTimeout(() => {
+        setUpdatePriceMessage(null)
+      }, 1500)
+    } catch (error: any) {
+      console.error('Failed to update price:', error)
+      setUpdatePriceMessage({ type: 'error', text: error.message || 'Failed to update price' })
     }
   }
 
@@ -708,6 +738,21 @@ export default function WarehousePage() {
                             <Button
                               onClick={() => {
                                 setSelectedWarehouseItem(item)
+                                setUpdatePriceFormData({
+                                  purchasePrice: item.purchasePrice.toString(),
+                                  sellingPrice: item.sellingPrice.toString(),
+                                })
+                                setUpdatePriceMessage(null)
+                                setIsUpdatePriceModalOpen(true)
+                              }}
+                              variant="secondary"
+                              className="text-xs px-2 py-1"
+                            >
+                              Edit Price
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                setSelectedWarehouseItem(item)
                                 setAllocateFormData({ ...allocateFormData, quantity: '' })
                                 setIsAllocateModalOpen(true)
                               }}
@@ -1011,6 +1056,65 @@ export default function WarehousePage() {
               </Button>
               <Button type="submit" variant="primary">
                 Add Stock
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* Update Price Modal */}
+      {isUpdatePriceModalOpen && selectedWarehouseItem && (
+        <Modal
+          isOpen={isUpdatePriceModalOpen}
+          title={`Update Price: ${selectedWarehouseItem.medicineName}`}
+          onClose={() => {
+            setIsUpdatePriceModalOpen(false)
+            setUpdatePriceMessage(null)
+          }}
+          size="sm"
+        >
+          <form onSubmit={handleUpdatePrice} className="space-y-4">
+            {updatePriceMessage && (
+              <div className={`p-3 rounded-lg text-sm ${
+                updatePriceMessage.type === 'success' 
+                  ? 'bg-green-50 text-green-800 border border-green-200' 
+                  : 'bg-red-50 text-red-800 border border-red-200'
+              }`}>
+                {updatePriceMessage.text}
+              </div>
+            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-900">Purchase Price *</label>
+              <input
+                type="number"
+                step="0.01"
+                value={updatePriceFormData.purchasePrice}
+                onChange={(e) => setUpdatePriceFormData({ ...updatePriceFormData, purchasePrice: e.target.value })}
+                required
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900">Selling Price *</label>
+              <input
+                type="number"
+                step="0.01"
+                value={updatePriceFormData.sellingPrice}
+                onChange={(e) => setUpdatePriceFormData({ ...updatePriceFormData, sellingPrice: e.target.value })}
+                required
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none"
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setIsUpdatePriceModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary">
+                Update Price
               </Button>
             </div>
           </form>

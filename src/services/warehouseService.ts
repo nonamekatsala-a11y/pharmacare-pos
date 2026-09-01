@@ -572,6 +572,27 @@ export const warehouseService = {
     if (error) throw error
   },
 
+  updateItem: async (id: string, updates: Partial<WarehouseItem>): Promise<WarehouseItem> => {
+    const supabase = getSupabaseClient()
+
+    const { data, error } = await supabase
+      .from('warehouse_items')
+      .update({
+        purchase_price: updates.purchasePrice,
+        selling_price: updates.sellingPrice,
+        expiry_date: updates.expiryDate,
+        reorder_level: updates.reorderLevel,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select('id, medicine_id, batch_number, expiry_date, purchase_price, selling_price, total_quantity, allocated_quantity, location, reorder_level, created_at, updated_at, medicines(medicine_name, generic_name, barcode, manufacturer)')
+      .single()
+
+    if (error) throw error
+
+    return mapWarehouseItem(data as WarehouseRow)
+  },
+
   clearWarehouse: async (): Promise<void> => {
     const supabase = getSupabaseClient()
     
