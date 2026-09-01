@@ -584,7 +584,16 @@ export const warehouseService = {
 
     if (fetchError) throw fetchError
 
-    const medicineName = currentItem.medicines?.medicine_name
+    // Handle different response structures from Supabase
+    let medicineName: string | undefined
+    if (currentItem) {
+      const medicines = (currentItem as any).medicines
+      if (Array.isArray(medicines) && medicines.length > 0) {
+        medicineName = medicines[0]?.medicine_name
+      } else if (medicines && typeof medicines === 'object') {
+        medicineName = medicines.medicine_name
+      }
+    }
     const medicineId = currentItem.medicine_id
 
     // Update the warehouse item
