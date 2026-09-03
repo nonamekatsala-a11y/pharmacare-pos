@@ -84,7 +84,9 @@ export default function WarehousePage() {
         warehouseService.getWarehouseSummary(),
         warehouseService.getAllocationSummary(),
       ])
-      setWarehouseItems(items)
+      // Sort items alphabetically by medicine name
+      const sortedItems = items.sort((a, b) => a.medicineName.localeCompare(b.medicineName))
+      setWarehouseItems(sortedItems)
       setAllocations(allocs)
       setWarehouseSummary(warehouseSumm)
       setAllocationSummary(allocationSumm)
@@ -98,6 +100,17 @@ export default function WarehousePage() {
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault()
     setAddMessage(null)
+    
+    // Check if medicine already exists in warehouse
+    const existingMedicine = warehouseItems.find(
+      item => item.medicineName.toLowerCase() === addItemFormData.medicineName.toLowerCase()
+    )
+    
+    if (existingMedicine) {
+      setAddMessage({ type: 'error', text: 'Medicine already exists in warehouse!' })
+      return
+    }
+    
     try {
       await warehouseService.addItem({
         medicineId: '', // Will be generated in service
