@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { saleService, MedicineSale } from '@services/saleService'
 import { setAdminPharmacyOverride } from '@services/medicineService'
 import { useAuthStore } from '@store/authStore'
-import { formatCurrency, formatDate } from '@utils/formatters'
+import { formatCurrency, formatDate, formatLocalDateKey } from '@utils/formatters'
 import { PHARMACIES } from '@config/pharmacyConfig'
 import AdminPharmacySelector from '@components/Admin/AdminPharmacySelector'
 import type { Pharmacy } from '@config/pharmacyConfig'
@@ -57,14 +57,14 @@ export default function SalesPage() {
         fromDate = customDateRange.from
         toDate = customDateRange.to
       } else if (dateFilter === 'today') {
-        const today = new Date().toISOString().split('T')[0]
+        const today = formatLocalDateKey()
         fromDate = today
         toDate = today
       } else if (dateFilter === 'this-month') {
         const today = new Date()
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
-        fromDate = formatDate(startOfMonth)
-        toDate = formatDate(today)
+        fromDate = formatLocalDateKey(startOfMonth)
+        toDate = formatLocalDateKey(today)
       }
 
       // Load medicine sales data based on tab
@@ -72,14 +72,14 @@ export default function SalesPage() {
       let medicineToDate: string | undefined
 
       if (medicineTab === 'today') {
-        const today = new Date().toISOString().split('T')[0]
+        const today = formatLocalDateKey()
         medicineFromDate = today
         medicineToDate = today
       } else {
         const today = new Date()
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
-        medicineFromDate = formatDate(startOfMonth)
-        medicineToDate = formatDate(today)
+        medicineFromDate = formatLocalDateKey(startOfMonth)
+        medicineToDate = formatLocalDateKey(today)
       }
 
       const [allSales, medicineData] = await Promise.all([

@@ -563,9 +563,8 @@ export const saleService = {
 
   getSalesByDateRange: async (from: string, to: string): Promise<Sale[]> => {
     const sales = await saleService.getAll()
-    const fromDate = new Date(from)
-    const toDate = new Date(to)
-    toDate.setHours(23, 59, 59, 999)
+    const fromDate = new Date(`${from}T00:00:00`)
+    const toDate = new Date(`${to}T23:59:59.999`)
     return sales.filter((sale) => new Date(sale.saleDate) >= fromDate && new Date(sale.saleDate) <= toDate)
   },
 
