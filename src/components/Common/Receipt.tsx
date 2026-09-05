@@ -33,9 +33,8 @@ export default function Receipt({
         <p className="text-xs text-gray-500 mt-2">{formatDateTime(sale.saleDate)}</p>
       </div>
 
-      {/* Invoice Number */}
+      {/* Cashier Information */}
       <div className="text-center mb-4">
-        <p className="text-sm text-gray-600">Invoice #: {sale.invoiceNumber}</p>
         <p className="text-xs text-gray-500">Cashier: {sale.userId}</p>
       </div>
 

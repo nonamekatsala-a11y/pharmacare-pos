@@ -53,22 +53,69 @@ export default function Receipt({ isOpen, data, onClose }: ReceiptProps) {
                 padding: 0;
                 box-sizing: border-box;
               }
+              @page {
+                size: 80mm auto;
+                margin: 0;
+              }
+              html {
+                width: 80mm;
+                height: fit-content;
+              }
               body {
                 font-family: 'Courier New', monospace;
                 background: white;
-                padding: 20px;
+                width: 80mm;
+                height: fit-content;
+                min-height: 0;
+                margin: 0;
+                padding: 0;
+                font-size: 11px;
+                line-height: 1.25;
               }
               .receipt {
-                max-width: 400px;
-                margin: 0 auto;
-                padding: 20px;
+                width: 80mm;
+                height: fit-content;
+                min-height: 0;
+                padding: 3mm;
+                margin: 0;
+                overflow: visible;
+                page-break-after: avoid;
+              }
+              .receipt h3 {
+                font-size: 14px;
+                margin-bottom: 3px;
+              }
+              .receipt > div {
+                margin-bottom: 5px;
+              }
+              .receipt button,
+              .receipt svg,
+              .receipt .no-print {
+                display: none;
+              }
+              .receipt .grid {
+                display: grid;
+                grid-template-columns: minmax(0, 4fr) 2fr 3fr 3fr;
+                gap: 2px;
+              }
+              .receipt .text-xs {
+                font-size: 11px;
+              }
+              .receipt .text-sm {
+                font-size: 13px;
               }
               @media print {
                 body {
+                  width: 80mm;
+                  height: fit-content;
+                  min-height: 0;
                   padding: 0;
                 }
                 .receipt {
-                  max-width: 100%;
+                  width: 80mm;
+                  height: fit-content;
+                  min-height: 0;
+                  padding: 3mm;
                 }
                 .no-print {
                   display: none;
@@ -126,12 +173,8 @@ export default function Receipt({ isOpen, data, onClose }: ReceiptProps) {
                 <h3 className="text-base font-bold text-primary-700">{data.pharmacyName}</h3>
               </div>
 
-              {/* Invoice Details */}
+              {/* Receipt Details */}
               <div className="mb-2 text-left">
-                <div className="flex justify-between text-xs mb-0.5">
-                  <span className="text-primary-600">Invoice:</span>
-                  <span className="font-bold text-primary-700">{data.invoiceNumber}</span>
-                </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-primary-600">Date:</span>
                   <span className="text-primary-700">{formatDate(data.timestamp)}</span>
