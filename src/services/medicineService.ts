@@ -1,7 +1,8 @@
-import { demoDashboardSummary, delay } from './mockData'
 import { useAuthStore } from '@store/authStore'
 import { getSupabaseClient } from '@lib/supabaseClient'
 import { warehouseService } from './warehouseService'
+
+const delay = (milliseconds = 250) => new Promise((resolve) => setTimeout(resolve, milliseconds))
 
 // Admin pharmacy override for viewing other pharmacies' data
 let adminPharmacyOverride: string | null = null
@@ -355,23 +356,7 @@ export const inventoryService = {
   },
 
   getSummary: async (): Promise<DashboardSummary> => {
-    const pharmacyInventory = await medicineService.getAll()
-    
-    // Calculate pharmacy-specific summary
-    const totalMedicines = pharmacyInventory.length
-    const lowStockCount = pharmacyInventory.filter((item) => item.quantity <= item.reorderLevel).length
-    const categoriesCount = new Set(pharmacyInventory.map((m) => m.category)).size
-    const suppliersCount = new Set(pharmacyInventory.map((m) => m.supplier)).size
-    
-    return {
-      totalMedicines,
-      lowStockCount,
-      categoriesCount,
-      suppliersCount,
-      totalSalesToday: demoDashboardSummary.totalSalesToday,
-      totalUnitsSold: 0,
-      revenueToday: demoDashboardSummary.revenueToday,
-    }
+    return dashboardService.getSummary()
   },
 
   addStock: async (id: string, quantity: number): Promise<void> => {

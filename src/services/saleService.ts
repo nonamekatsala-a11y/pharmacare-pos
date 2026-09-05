@@ -1,4 +1,3 @@
-import { demoSales, delay, demoMedicines } from './mockData'
 import { getAdminPharmacyOverride } from './medicineService'
 import { useAuthStore } from '@store/authStore'
 import { getSupabaseClient } from '@lib/supabaseClient'
@@ -240,6 +239,21 @@ export const saleService = {
 
     if (!pharmacyId || !user) throw new Error('No pharmacy is selected for this sale.')
 
+    const { data: saleId, error: checkoutError } = await getSupabaseClient().rpc('complete_sale', {
+      target_pharmacy_id: pharmacyId,
+      target_invoice_number: sale.invoiceNumber,
+      target_sale_date: sale.saleDate,
+      target_customer_id: sale.customerId || null,
+      target_payment_method: sale.paymentMethod,
+      target_items: sale.items,
+    })
+
+    if (checkoutError) throw new Error(checkoutError.message)
+    if (!saleId) throw new Error('The sale was not created.')
+
+    return saleService.getById(saleId as string)
+
+    /*
     const medicineIds = [...new Set(sale.items.map((item) => item.medicineId))]
     const supabase = getSupabaseClient()
     const { data: inventoryRows, error: inventoryError } = await supabase
@@ -427,6 +441,7 @@ export const saleService = {
       })),
       createdAt: saleRow.created_at,
     }
+    */
   },
 
   update: async (id: string, sale: Partial<Sale>): Promise<Sale> => {
@@ -534,11 +549,16 @@ export const saleService = {
   },
 
   delete: async (id: string): Promise<void> => {
-    await delay(200)
-    const index = demoSales.findIndex((s) => s.id === id)
-    if (index !== -1) {
-      demoSales.splice(index, 1)
-    }
+    const pharmacyId = getSalesPharmacyId()
+    if (!pharmacyId) throw new Error('No pharmacy is selected for sales.')
+
+    const { error } = await getSupabaseClient()
+      .from('sales')
+      .delete()
+      .eq('id', id)
+      .eq('pharmacy_id', pharmacyId)
+
+    if (error) throw error
   },
 
   getSalesByDateRange: async (from: string, to: string): Promise<Sale[]> => {
@@ -656,8 +676,7 @@ export const saleService = {
     salesByStatus: Record<string, number>
     sales: Sale[]
   }> => {
-    await delay(400)
-    let filteredSales = demoSales
+    let filteredSales = await saleService.getAll()
 
     if (params.from && params.to) {
       const fromDate = new Date(params.from)
@@ -705,181 +724,13 @@ export const saleService = {
     period?: 'today' | 'week' | 'month' | 'all'
     limit?: number
   }): Promise<TopSellingMedicine[]> => {
-    await delay(300)
-    let filteredSales = demoSales
-
-    // Filter by time period
-    if (params.period && params.period !== 'all') {
-      const now = new Date()
-      let fromDate: Date | null = null
-
-      if (params.period === 'today') {
-        fromDate = new Date(now.setHours(0, 0, 0, 0))
-      } else if (params.period === 'week') {
-        fromDate = new Date(now.setDate(now.getDate() - 7))
-      } else if (params.period === 'month') {
-        fromDate = new Date(now.setDate(now.getDate() - 30))
-      }
-
-      if (fromDate) {
-        filteredSales = filteredSales.filter((sale) => {
-          const saleDate = new Date(sale.saleDate)
-          return saleDate >= fromDate
-        })
-      }
-    }
-
-    // Aggregate medicine sales
-    const medicineMap = new Map<string, {
-      medicineId: string
-      medicineName: string
-      genericName?: string
-      totalQuantity: number
-      totalRevenue: number
-      transactions: number
-    }>()
-
-    filteredSales.forEach((sale) => {
-      sale.items.forEach((item) => {
-        const medicine = demoMedicines.find((m) => m.id === item.medicineId)
-        const medicineName = medicine?.medicineName || 'Unknown Medicine'
-        const genericName = medicine?.genericName
-
-        const existing = medicineMap.get(item.medicineId) || {
-          medicineId: item.medicineId,
-          medicineName,
-          genericName,
-          totalQuantity: 0,
-          totalRevenue: 0,
-          transactions: 0,
-        }
-
-        existing.totalQuantity += item.quantity
-        existing.totalRevenue += item.lineTotal
-        existing.transactions += 1
-
-        medicineMap.set(item.medicineId, existing)
-      })
-    })
-
-    // Convert to array and sort by quantity (default)
-    const topMedicines = Array.from(medicineMap.values())
-      .sort((a, b) => b.totalQuantity - a.totalQuantity)
-      .slice(0, params.limit || 10)
-
-    return topMedicines
+    return saleService.getTopSellingMedicinesReal(params)
   },
 
   getTopRevenueMedicines: async (params: {
     period?: 'today' | 'week' | 'month' | 'all'
     limit?: number
   }): Promise<TopSellingMedicine[]> => {
-    await delay(300)
-    let filteredSales = demoSales
-
-    // Filter by time period
-    if (params.period && params.period !== 'all') {
-      const now = new Date()
-      let fromDate: Date | null = null
-
-      if (params.period === 'today') {
-        fromDate = new Date(now.setHours(0, 0, 0, 0))
-      } else if (params.period === 'week') {
-        fromDate = new Date(now.setDate(now.getDate() - 7))
-      } else if (params.period === 'month') {
-        fromDate = new Date(now.setDate(now.getDate() - 30))
-      }
-
-      if (fromDate) {
-        filteredSales = filteredSales.filter((sale) => {
-          const saleDate = new Date(sale.saleDate)
-          return saleDate >= fromDate
-        })
-      }
-    }
-
-    // Aggregate medicine sales
-    const medicineMap = new Map<string, {
-      medicineId: string
-      medicineName: string
-      genericName?: string
-      totalQuantity: number
-      totalRevenue: number
-      transactions: number
-    }>()
-
-    filteredSales.forEach((sale) => {
-      sale.items.forEach((item) => {
-        const medicine = demoMedicines.find((m) => m.id === item.medicineId)
-        const medicineName = medicine?.medicineName || 'Unknown Medicine'
-        const genericName = medicine?.genericName
-
-        const existing = medicineMap.get(item.medicineId) || {
-          medicineId: item.medicineId,
-          medicineName,
-          genericName,
-          totalQuantity: 0,
-          totalRevenue: 0,
-          transactions: 0,
-        }
-
-        existing.totalQuantity += item.quantity
-        existing.totalRevenue += item.lineTotal
-        existing.transactions += 1
-
-        medicineMap.set(item.medicineId, existing)
-      })
-    })
-
-    // Convert to array and sort by revenue
-    const topMedicines = Array.from(medicineMap.values())
-      .sort((a, b) => b.totalRevenue - a.totalRevenue)
-      .slice(0, params.limit || 10)
-
-    return topMedicines
-  },
-
-  clearSales: async (): Promise<void> => {
-    const supabase = getSupabaseClient()
-    
-    console.log('Starting sales clear operation...')
-    
-    // Delete all sale items first
-    const { error: itemsError, count: itemsCount } = await supabase
-      .from('sale_items')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000') // Delete all records
-      .select()
-    
-    console.log('Deleted sale items:', itemsCount, 'Error:', itemsError)
-    
-    if (itemsError) throw itemsError
-    
-    // Delete all sales
-    const { error: salesError, count: salesCount } = await supabase
-      .from('sales')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000') // Delete all records
-      .select()
-    
-    console.log('Deleted sales:', salesCount, 'Error:', salesError)
-    
-    if (salesError) throw salesError
-
-    // Also clear expenses if they exist (related to financial records)
-    const { error: expensesError, count: expensesCount } = await supabase
-      .from('expenses')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000') // Delete all records
-      .select()
-    
-    console.log('Deleted expenses:', expensesCount, 'Error:', expensesError)
-    
-    // Ignore error if expenses table doesn't exist
-    if (expensesError && expensesError.code !== 'PGRST116') {
-      console.warn('Error clearing expenses (table may not exist):', expensesError)
-    }
-    
-    console.log('Sales clear operation completed successfully')
+    return saleService.getTopRevenueMedicinesReal(params)
   },
 }
