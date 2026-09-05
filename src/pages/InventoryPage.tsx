@@ -23,6 +23,7 @@ export default function InventoryPage() {
   const [adminSelectedPharmacy, setAdminSelectedPharmacy] = useState<Pharmacy | null>(null)
   const [updateMedicineId, setUpdateMedicineId] = useState<string | null>(null)
   const [damagedQuantity, setDamagedQuantity] = useState('')
+  const [expiryDate, setExpiryDate] = useState('')
   const [deleteMedicineId, setDeleteMedicineId] = useState<string | null>(null)
 
   // Initialize pharmacy selection for both admins and pharmacists
@@ -89,9 +90,13 @@ export default function InventoryPage() {
     if (!updateMedicineId) return
 
     try {
-      await inventoryService.recordDamage(updateMedicineId, Number(damagedQuantity))
+      await medicineService.update(updateMedicineId, { expiryDate: expiryDate || undefined })
+      if (damagedQuantity) {
+        await inventoryService.recordDamage(updateMedicineId, Number(damagedQuantity))
+      }
       setUpdateMedicineId(null)
       setDamagedQuantity('')
+      setExpiryDate('')
       await loadInventoryData()
     } catch (error) {
       console.error('Failed to update medicine inventory:', error)
@@ -289,6 +294,7 @@ export default function InventoryPage() {
       <InventoryList
         onUpdate={user?.role === 'Admin' ? (medicineId) => {
           setUpdateMedicineId(medicineId)
+          setExpiryDate(medicines.find((medicine) => medicine.id === medicineId)?.expiryDate || '')
           setDamagedQuantity('')
         } : undefined}
         onDelete={user?.role === 'Admin' ? setDeleteMedicineId : undefined}
@@ -342,29 +348,49 @@ export default function InventoryPage() {
       {updateMedicineId && (
         <Modal
           isOpen={true}
-          title="Record Damaged Medicine"
-          onClose={() => setUpdateMedicineId(null)}
+          title="Update Inventory"
+          onClose={() => {
+            setUpdateMedicineId(null)
+            setExpiryDate('')
+            setDamagedQuantity('')
+          }}
           size="sm"
         >
           <div className="space-y-4">
             <p className="text-sm text-gray-600">
-              Record damaged units for <strong>{medicineToUpdate?.medicineName || 'this medicine'}</strong>. Good stock will remain available.
+              Update <strong>{medicineToUpdate?.medicineName || 'this medicine'}</strong>.
             </p>
-            <input
-              type="number"
-              min="1"
-              step="1"
-              value={damagedQuantity}
-              onChange={(event) => setDamagedQuantity(event.target.value)}
-              placeholder="Damaged quantity"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2"
-            />
+            <label className="block text-sm font-medium text-gray-700">
+              Expiry date
+              <input
+                type="date"
+                value={expiryDate}
+                onChange={(event) => setExpiryDate(event.target.value)}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+              />
+            </label>
+            <label className="block text-sm font-medium text-gray-700">
+              Damaged quantity (optional)
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={damagedQuantity}
+                onChange={(event) => setDamagedQuantity(event.target.value)}
+                placeholder="Damaged quantity"
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+              />
+            </label>
             <div className="flex justify-end gap-3">
-              <Button type="button" variant="secondary" onClick={() => setUpdateMedicineId(null)}>
+              <Button type="button" variant="secondary" onClick={() => {
+                setUpdateMedicineId(null)
+                setExpiryDate('')
+                setDamagedQuantity('')
+              }}>
                 Cancel
               </Button>
               <Button type="button" variant="primary" onClick={handleUpdateMedicine}>
-                Record Damage
+                Save Changes
               </Button>
             </div>
           </div>

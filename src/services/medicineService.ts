@@ -1,6 +1,5 @@
 import { demoDashboardSummary, delay } from './mockData'
 import { useAuthStore } from '@store/authStore'
-import { getPharmacyInventory } from './pharmacyInventoryData'
 import { getSupabaseClient } from '@lib/supabaseClient'
 import { warehouseService } from './warehouseService'
 
@@ -280,13 +279,32 @@ export const medicineService = {
   },
 
   update: async (id: string, medicine: Partial<Medicine>): Promise<Medicine> => {
-    await delay(200)
+    const { user } = useAuthStore.getState()
+    if (user?.role !== 'Admin') {
+      throw new Error('Only administrators can update inventory medicines.')
+    }
+
     const pharmacyId = getEffectivePharmacyId()
-    const pharmacyInventory = pharmacyId && pharmacyId !== 'default'
-      ? getPharmacyInventory(pharmacyId)
-      : getPharmacyInventory('default')
-    const current = pharmacyInventory.find((item) => item.id === id) || pharmacyInventory[0]
-    return { ...current, ...medicine, id }
+    const updatePayload: Record<string, unknown> = {}
+
+    if ('expiryDate' in medicine) {
+      updatePayload.expiry_date = medicine.expiryDate || null
+    }
+
+    if (Object.keys(updatePayload).length === 0) {
+      return medicineService.getById(id)
+    }
+
+    const { data, error } = await getSupabaseClient()
+      .from('pharmacy_inventory')
+      .update(updatePayload)
+      .eq('medicine_id', id)
+      .eq('pharmacy_id', pharmacyId)
+      .select('*')
+      .single()
+
+    if (error) throw error
+    return mapInventoryRow(data as PharmacyInventoryRow)
   },
 
   delete: async (id: string): Promise<void> => {
