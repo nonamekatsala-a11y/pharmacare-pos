@@ -16,6 +16,7 @@ export default function WarehousePage() {
   const [allocations, setAllocations] = useState<Allocation[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'inventory' | 'allocations'>('inventory')
+  const [warehouseSearchTerm, setWarehouseSearchTerm] = useState('')
   
   // Summary data
   const [warehouseSummary, setWarehouseSummary] = useState<any>(null)
@@ -30,6 +31,7 @@ export default function WarehousePage() {
   const [restockQuantity, setRestockQuantity] = useState('')
   const [restockMessage, setRestockMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [updatePriceFormData, setUpdatePriceFormData] = useState({
+    medicineName: '',
     purchasePrice: '',
     sellingPrice: '',
   })
@@ -166,10 +168,11 @@ export default function WarehousePage() {
 
     try {
       await warehouseService.updateItem(selectedWarehouseItem.id, {
+        medicineName: updatePriceFormData.medicineName.trim(),
         purchasePrice: parseFloat(updatePriceFormData.purchasePrice),
         sellingPrice: parseFloat(updatePriceFormData.sellingPrice),
       })
-      setUpdatePriceFormData({ purchasePrice: '', sellingPrice: '' })
+      setUpdatePriceFormData({ medicineName: '', purchasePrice: '', sellingPrice: '' })
       setSelectedWarehouseItem(null)
       setIsUpdatePriceModalOpen(false)
       setUpdatePriceMessage({ type: 'success', text: 'Price updated successfully!' })
@@ -614,6 +617,22 @@ export default function WarehousePage() {
     }
   }
 
+  const normalizedWarehouseSearchTerm = warehouseSearchTerm.trim().toLowerCase()
+  const filteredWarehouseItems = normalizedWarehouseSearchTerm
+    ? warehouseItems.filter((item) => {
+        const searchableFields = [
+          item.medicineName,
+          item.genericName,
+          item.barcode,
+          item.batchNumber,
+        ]
+
+        return searchableFields.some((field) => (
+          field?.toLowerCase().includes(normalizedWarehouseSearchTerm)
+        ))
+      })
+    : warehouseItems
+
   if (isLoading) {
     return <div className="p-8">Loading warehouse data...</div>
   }
@@ -710,6 +729,26 @@ export default function WarehousePage() {
             </Button>
           </div>
 
+          <div className="mb-4 relative">
+            <svg
+              className="absolute left-3 top-3 h-5 w-5 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-4.35-4.35m2.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0z" />
+            </svg>
+            <input
+              type="search"
+              value={warehouseSearchTerm}
+              onChange={(event) => setWarehouseSearchTerm(event.target.value)}
+              placeholder="Search warehouse inventory..."
+              aria-label="Search warehouse inventory"
+              className="w-full rounded-lg border border-gray-300 bg-white py-3 pl-10 pr-4 text-gray-900 placeholder-gray-500 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20"
+            />
+          </div>
+
           <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -724,8 +763,8 @@ export default function WarehousePage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {warehouseItems.length > 0 ? (
-                    warehouseItems.map((item) => (
+                  {filteredWarehouseItems.length > 0 ? (
+                    filteredWarehouseItems.map((item) => (
                       <tr key={item.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
                           <div className="font-medium text-gray-900">{item.medicineName}</div>
@@ -752,6 +791,7 @@ export default function WarehousePage() {
                               onClick={() => {
                                 setSelectedWarehouseItem(item)
                                 setUpdatePriceFormData({
+                                  medicineName: item.medicineName,
                                   purchasePrice: item.purchasePrice.toString(),
                                   sellingPrice: item.sellingPrice.toString(),
                                 })
@@ -788,7 +828,9 @@ export default function WarehousePage() {
                   ) : (
                     <tr>
                       <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                        No items in warehouse
+                        {normalizedWarehouseSearchTerm
+                          ? 'No warehouse items match your search'
+                          : 'No items in warehouse'}
                       </td>
                     </tr>
                   )}
@@ -1079,7 +1121,7 @@ export default function WarehousePage() {
       {isUpdatePriceModalOpen && selectedWarehouseItem && (
         <Modal
           isOpen={isUpdatePriceModalOpen}
-          title={`Update Price: ${selectedWarehouseItem.medicineName}`}
+          title={`Edit Warehouse Item: ${selectedWarehouseItem.medicineName}`}
           onClose={() => {
             setIsUpdatePriceModalOpen(false)
             setUpdatePriceMessage(null)
@@ -1096,6 +1138,16 @@ export default function WarehousePage() {
                 {updatePriceMessage.text}
               </div>
             )}
+            <div>
+              <label className="block text-sm font-medium text-gray-900">Medicine Name *</label>
+              <input
+                type="text"
+                value={updatePriceFormData.medicineName}
+                onChange={(e) => setUpdatePriceFormData({ ...updatePriceFormData, medicineName: e.target.value })}
+                required
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none"
+              />
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-900">Purchase Price *</label>
               <input

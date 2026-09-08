@@ -288,6 +288,10 @@ export const medicineService = {
     const pharmacyId = getEffectivePharmacyId()
     const updatePayload: Record<string, unknown> = {}
 
+    if ('medicineName' in medicine) {
+      updatePayload.medicine_name = medicine.medicineName?.trim() || null
+    }
+
     if ('expiryDate' in medicine) {
       updatePayload.expiry_date = medicine.expiryDate || null
     }

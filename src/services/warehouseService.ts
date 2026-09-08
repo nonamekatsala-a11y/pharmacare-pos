@@ -612,6 +612,25 @@ export const warehouseService = {
 
     if (error) throw error
 
+    if (updates.medicineName !== undefined) {
+      const medicineName = updates.medicineName.trim()
+      if (!medicineName) throw new Error('Medicine name is required.')
+
+      const { error: medicineError } = await supabase
+        .from('medicines')
+        .update({ medicine_name: medicineName })
+        .eq('id', medicineId)
+
+      if (medicineError) throw medicineError
+
+      const { error: inventoryError } = await supabase
+        .from('pharmacy_inventory')
+        .update({ medicine_name: medicineName })
+        .eq('medicine_id', medicineId)
+
+      if (inventoryError) throw inventoryError
+    }
+
     // Update all pharmacy inventory records with the same medicine name
     if (updates.purchasePrice !== undefined || updates.sellingPrice !== undefined) {
       const updateData: any = {}

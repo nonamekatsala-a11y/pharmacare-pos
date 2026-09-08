@@ -22,6 +22,7 @@ export default function InventoryPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [adminSelectedPharmacy, setAdminSelectedPharmacy] = useState<Pharmacy | null>(null)
   const [updateMedicineId, setUpdateMedicineId] = useState<string | null>(null)
+  const [medicineName, setMedicineName] = useState('')
   const [damagedQuantity, setDamagedQuantity] = useState('')
   const [expiryDate, setExpiryDate] = useState('')
   const [deleteMedicineId, setDeleteMedicineId] = useState<string | null>(null)
@@ -90,11 +91,15 @@ export default function InventoryPage() {
     if (!updateMedicineId) return
 
     try {
-      await medicineService.update(updateMedicineId, { expiryDate: expiryDate || undefined })
+      await medicineService.update(updateMedicineId, {
+        medicineName: medicineName.trim(),
+        expiryDate: expiryDate || undefined,
+      })
       if (damagedQuantity) {
         await inventoryService.recordDamage(updateMedicineId, Number(damagedQuantity))
       }
       setUpdateMedicineId(null)
+      setMedicineName('')
       setDamagedQuantity('')
       setExpiryDate('')
       await loadInventoryData()
@@ -294,7 +299,9 @@ export default function InventoryPage() {
       <InventoryList
         onUpdate={user?.role === 'Admin' ? (medicineId) => {
           setUpdateMedicineId(medicineId)
-          setExpiryDate(medicines.find((medicine) => medicine.id === medicineId)?.expiryDate || '')
+          const medicine = medicines.find((item) => item.id === medicineId)
+          setMedicineName(medicine?.medicineName || '')
+          setExpiryDate(medicine?.expiryDate || '')
           setDamagedQuantity('')
         } : undefined}
         onDelete={user?.role === 'Admin' ? setDeleteMedicineId : undefined}
@@ -351,6 +358,7 @@ export default function InventoryPage() {
           title="Update Inventory"
           onClose={() => {
             setUpdateMedicineId(null)
+            setMedicineName('')
             setExpiryDate('')
             setDamagedQuantity('')
           }}
@@ -360,6 +368,15 @@ export default function InventoryPage() {
             <p className="text-sm text-gray-600">
               Update <strong>{medicineToUpdate?.medicineName || 'this medicine'}</strong>.
             </p>
+            <label className="block text-sm font-medium text-gray-700">
+              Medicine name
+              <input
+                type="text"
+                value={medicineName}
+                onChange={(event) => setMedicineName(event.target.value)}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+              />
+            </label>
             <label className="block text-sm font-medium text-gray-700">
               Expiry date
               <input
@@ -384,6 +401,7 @@ export default function InventoryPage() {
             <div className="flex justify-end gap-3">
               <Button type="button" variant="secondary" onClick={() => {
                 setUpdateMedicineId(null)
+                setMedicineName('')
                 setExpiryDate('')
                 setDamagedQuantity('')
               }}>

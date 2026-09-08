@@ -28,7 +28,7 @@ export const PHARMACIES: Pharmacy[] = [
     },
     inventorySettings: {
       reorderThreshold: 15,
-      lowStockThreshold: 10,
+      lowStockThreshold: 2,
       defaultCurrency: 'K',
     },
   },
@@ -43,7 +43,7 @@ export const PHARMACIES: Pharmacy[] = [
     },
     inventorySettings: {
       reorderThreshold: 20,
-      lowStockThreshold: 15,
+      lowStockThreshold: 2,
       defaultCurrency: 'K',
     },
   },
@@ -58,7 +58,7 @@ export const PHARMACIES: Pharmacy[] = [
     },
     inventorySettings: {
       reorderThreshold: 12,
-      lowStockThreshold: 8,
+      lowStockThreshold: 2,
       defaultCurrency: 'K',
     },
   },
@@ -73,7 +73,7 @@ export const PHARMACIES: Pharmacy[] = [
     },
     inventorySettings: {
       reorderThreshold: 18,
-      lowStockThreshold: 12,
+      lowStockThreshold: 2,
       defaultCurrency: 'K',
     },
   },
@@ -88,7 +88,7 @@ export const PHARMACIES: Pharmacy[] = [
     },
     inventorySettings: {
       reorderThreshold: 25,
-      lowStockThreshold: 20,
+      lowStockThreshold: 2,
       defaultCurrency: 'K',
     },
   },
@@ -103,7 +103,7 @@ export const PHARMACIES: Pharmacy[] = [
     },
     inventorySettings: {
       reorderThreshold: 10,
-      lowStockThreshold: 5,
+      lowStockThreshold: 2,
       defaultCurrency: 'K',
     },
   },
@@ -118,7 +118,7 @@ export const PHARMACIES: Pharmacy[] = [
     },
     inventorySettings: {
       reorderThreshold: 14,
-      lowStockThreshold: 9,
+      lowStockThreshold: 2,
       defaultCurrency: 'K',
     },
   },
@@ -133,7 +133,7 @@ export const PHARMACIES: Pharmacy[] = [
     },
     inventorySettings: {
       reorderThreshold: 8,
-      lowStockThreshold: 5,
+      lowStockThreshold: 2,
       defaultCurrency: 'K',
     },
   },
@@ -167,7 +167,7 @@ export const getPharmacyInventorySettings = (pharmacyId: string) => {
   const pharmacy = PHARMACIES.find((p) => p.id === pharmacyId)
   return pharmacy?.inventorySettings || {
     reorderThreshold: 10,
-    lowStockThreshold: 5,
+    lowStockThreshold: 2,
     defaultCurrency: 'K',
   }
 }
