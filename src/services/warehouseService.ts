@@ -234,7 +234,7 @@ export const warehouseService = {
         total_quantity: item.totalQuantity,
         allocated_quantity: 0,
         location: 'Main Warehouse',
-        reorder_level: item.reorderLevel || 0,
+        reorder_level: item.reorderLevel || 2,
       })
       .select('id, medicine_id, batch_number, expiry_date, purchase_price, selling_price, total_quantity, allocated_quantity, location, reorder_level, created_at, updated_at, medicines(medicine_name, generic_name, barcode, manufacturer)')
       .single()

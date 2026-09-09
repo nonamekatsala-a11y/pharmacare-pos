@@ -57,7 +57,7 @@ export default function WarehousePage() {
     purchasePrice: '',
     sellingPrice: '',
     expiryDate: '',
-    reorderLevel: '',
+    reorderLevel: '2',
   })
 
   const [allocateFormData, setAllocateFormData] = useState({
@@ -130,7 +130,7 @@ export default function WarehousePage() {
         purchasePrice: '',
         sellingPrice: '',
         expiryDate: '',
-        reorderLevel: '',
+        reorderLevel: '2',
       })
       setAddMessage({ type: 'success', text: 'Item added to warehouse successfully!' })
       loadData()

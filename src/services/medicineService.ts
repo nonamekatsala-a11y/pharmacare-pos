@@ -201,7 +201,7 @@ export const medicineService = {
               sellingPrice: allocation.sellingPrice || 0,
               taxRate: 0.15,
               quantity: allocation.quantity, // Use the allocated quantity
-              reorderLevel: 10,
+              reorderLevel: 2,
               prescriptionRequired: false,
               status: 'Available',
               isActive: true,
@@ -269,7 +269,7 @@ export const medicineService = {
       sellingPrice: medicine.sellingPrice || 0,
       taxRate: medicine.taxRate || 0.15,
       quantity: medicine.quantity || 0,
-      reorderLevel: medicine.reorderLevel || 10,
+      reorderLevel: medicine.reorderLevel || 2,
       prescriptionRequired: Boolean(medicine.prescriptionRequired),
       status: medicine.status || 'Available',
       isActive: medicine.isActive ?? true,
