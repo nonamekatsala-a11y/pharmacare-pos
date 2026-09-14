@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { saleService, MedicineSale } from '@services/saleService'
+import { saleService, MedicineSale, Sale } from '@services/saleService'
 import { setAdminPharmacyOverride } from '@services/medicineService'
 import { useAuthStore } from '@store/authStore'
 import { formatCurrency, formatLocalDateKey } from '@utils/formatters'
 import { PHARMACIES } from '@config/pharmacyConfig'
 import AdminPharmacySelector from '@components/Admin/AdminPharmacySelector'
+import SaleDetailModal from '@components/Common/SaleDetailModal'
 import type { Pharmacy } from '@config/pharmacyConfig'
 
 export default function SalesPage() {
@@ -41,6 +42,9 @@ export default function SalesPage() {
   const [totalRevenue, setTotalRevenue] = useState(0)
   const [salesByPaymentMethod, setSalesByPaymentMethod] = useState<{ method: string; amount: number; percentage: number; icon: string }[]>([])
   const [salesByMedicine, setSalesByMedicine] = useState<MedicineSale[]>([])
+  const [salesRecords, setSalesRecords] = useState<Sale[]>([])
+  const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
+  const [isSaleDetailOpen, setIsSaleDetailOpen] = useState(false)
 
   useEffect(() => {
     loadSalesData()
@@ -127,6 +131,7 @@ export default function SalesPage() {
       setTotalRevenue(revenue)
       setSalesByPaymentMethod(paymentMethodData)
       setSalesByMedicine(medicineData)
+      setSalesRecords(filteredSales)
     } catch (error) {
       console.error('Failed to load sales data:', error)
     } finally {
@@ -150,6 +155,23 @@ export default function SalesPage() {
   const handleExport = () => {
     // Export functionality placeholder
     console.log('Exporting data...')
+  }
+
+  const handleOpenSale = (sale: Sale) => {
+    setSelectedSale(sale)
+    setIsSaleDetailOpen(true)
+  }
+
+  const handleSaveSale = async (updatedSale: Sale) => {
+    try {
+      await saleService.update(updatedSale.id, updatedSale)
+      setSelectedSale(updatedSale)
+      await loadSalesData()
+      setIsSaleDetailOpen(false)
+    } catch (error) {
+      console.error('Failed to update sale:', error)
+      throw error
+    }
   }
 
   const filteredMedicines = salesByMedicine.filter(medicine =>
@@ -266,6 +288,65 @@ export default function SalesPage() {
         </div>
       </div>
 
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Sales Records</h2>
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Invoice</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Date</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Payment</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Total</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {salesRecords.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-500">
+                    No sales records found for this period.
+                  </td>
+                </tr>
+              ) : (
+                salesRecords.map((sale) => (
+                  <tr key={sale.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 text-sm font-mono text-gray-900">{sale.invoiceNumber}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{new Date(sale.saleDate).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{sale.paymentMethod}</td>
+                    <td className="px-4 py-3 text-sm font-semibold text-gray-900">{formatCurrency(sale.total)}</td>
+                    <td className="px-4 py-3 text-sm">
+                      <span
+                        className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${
+                          sale.status === 'Completed'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {sale.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenSale(sale)}
+                        className="text-primary-600 hover:text-primary-800 font-medium"
+                      >
+                        View / Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Medicines Sold Section */}
       <div>
         <div className="flex items-center justify-between mb-4">
@@ -347,6 +428,14 @@ export default function SalesPage() {
           </table>
         </div>
       </div>
+
+      <SaleDetailModal
+        sale={selectedSale}
+        isOpen={isSaleDetailOpen}
+        onClose={() => setIsSaleDetailOpen(false)}
+        onSave={handleSaveSale}
+        isAdmin={user?.role === 'Admin'}
+      />
     </div>
   )
 }
