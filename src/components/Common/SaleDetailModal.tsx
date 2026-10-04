@@ -163,7 +163,7 @@ export default function SaleDetailModal({
               <tbody>
                 {(isEditMode ? editedItems : sale.items).map((item) => (
                   <tr key={item.id} className="border-t border-gray-200">
-                    <td className="px-4 py-3 text-sm text-gray-900">{item.medicineId}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{item.medicineName || item.medicineId}</td>
                     <td className="px-4 py-3 text-sm text-gray-900 text-right">
                       {isEditMode ? (
                         <input

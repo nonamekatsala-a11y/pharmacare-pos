@@ -9,6 +9,40 @@ const getSalesPharmacyId = (): string | undefined => {
     : user?.pharmacyId || selectedPharmacy?.id
 }
 
+const getMedicineNames = async (pharmacyId: string, medicineIds: string[]): Promise<Map<string, string>> => {
+  const uniqueIds = Array.from(new Set(medicineIds))
+  if (uniqueIds.length === 0) return new Map()
+
+  const supabase = getSupabaseClient()
+  const { data: inventory, error: inventoryError } = await supabase
+    .from('pharmacy_inventory')
+    .select('medicine_id, medicine_name')
+    .eq('pharmacy_id', pharmacyId)
+
+  if (inventoryError) throw inventoryError
+
+  const medicineNames = new Map((inventory || []).map((row) => {
+    const item = row as { medicine_id: string; medicine_name: string }
+    return [item.medicine_id, item.medicine_name] as const
+  }))
+  const missingIds = uniqueIds.filter((id) => !medicineNames.has(id))
+
+  if (missingIds.length > 0) {
+    const { data: medicines, error: medicinesError } = await supabase
+      .from('medicines')
+      .select('id, medicine_name')
+      .in('id', missingIds)
+
+    if (medicinesError) throw medicinesError
+    ;(medicines || []).forEach((row) => {
+      const medicine = row as { id: string; medicine_name: string }
+      medicineNames.set(medicine.id, medicine.medicine_name)
+    })
+  }
+
+  return medicineNames
+}
+
 export interface Sale {
   id: string
   invoiceNumber: string
@@ -29,6 +63,7 @@ export interface SaleItem {
   id: string
   saleId: string
   medicineId: string
+  medicineName?: string
   quantity: number
   unitPrice: number
   lineTotal: number
@@ -98,7 +133,13 @@ export const saleService = {
 
     if (error) throw error
 
-    return (data || []).map((sale) => {
+    const saleRows = (data || []) as Array<{ sale_items?: Array<{ medicine_id: string }> }>
+    const medicineNames = await getMedicineNames(
+      pharmacyId,
+      saleRows.flatMap((sale) => (sale.sale_items || []).map((item) => item.medicine_id)),
+    )
+
+    return saleRows.map((sale) => {
       const row = sale as {
         id: string
         invoice_number: string
@@ -138,6 +179,7 @@ export const saleService = {
           id: item.id,
           saleId: item.sale_id,
           medicineId: item.medicine_id,
+          medicineName: medicineNames.get(item.medicine_id),
           quantity: item.quantity,
           unitPrice: Number(item.unit_price),
           lineTotal: Number(item.line_total),
@@ -630,15 +672,11 @@ export const saleService = {
   getSalesByMedicine: async (from?: string, to?: string): Promise<MedicineSale[]> => {
     const filteredSales = from && to ? await saleService.getSalesByDateRange(from, to) : await saleService.getAll()
     const pharmacyId = getSalesPharmacyId()
-    const { data: inventory, error } = await getSupabaseClient()
-      .from('pharmacy_inventory')
-      .select('medicine_id, medicine_name')
-      .eq('pharmacy_id', pharmacyId)
-    if (error) throw error
-    const medicineNames = new Map((inventory || []).map((row) => {
-      const item = row as { medicine_id: string; medicine_name: string }
-      return [item.medicine_id, item.medicine_name] as const
-    }))
+    if (!pharmacyId) throw new Error('No pharmacy is selected for sales.')
+    const medicineNames = await getMedicineNames(
+      pharmacyId,
+      filteredSales.flatMap((sale) => sale.items.map((item) => item.medicineId)),
+    )
 
     const medicineSales: MedicineSale[] = []
 
