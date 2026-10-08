@@ -110,7 +110,12 @@ export default function SalesPage() {
       // Calculate totals by payment method
       const revenue = filteredSales.reduce((sum, s) => sum + s.total, 0)
       const paymentMethodTotals = filteredSales.reduce((acc, sale) => {
-        acc[sale.paymentMethod] = (acc[sale.paymentMethod] || 0) + sale.total
+        const payments = sale.paymentDetails?.length
+          ? sale.paymentDetails
+          : [{ method: sale.paymentMethod, amount: sale.total }]
+        payments.forEach(({ method, amount }) => {
+          acc[method] = (acc[method] || 0) + amount
+        })
         return acc
       }, {} as Record<string, number>)
 
@@ -361,7 +366,15 @@ export default function SalesPage() {
                   <tr key={sale.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-sm font-mono text-gray-900">{sale.invoiceNumber}</td>
                     <td className="px-4 py-3 text-sm text-gray-700">{new Date(sale.saleDate).toLocaleString()}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{sale.paymentMethod}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">
+                      {sale.paymentDetails?.length
+                        ? sale.paymentDetails.map((payment, index) => (
+                          <div key={`${payment.method}-${index}`}>
+                            {payment.method}: {formatCurrency(payment.amount)}
+                          </div>
+                        ))
+                        : sale.paymentMethod}
+                    </td>
                     <td className="px-4 py-3 text-sm font-semibold text-gray-900">{formatCurrency(sale.total)}</td>
                     <td className="px-4 py-3 text-sm">
                       <span

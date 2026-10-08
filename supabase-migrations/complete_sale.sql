@@ -1,13 +1,19 @@
 -- Complete a sale and decrement inventory atomically.
 -- Apply this migration in Supabase before using the RPC from the web app.
 
+ALTER TABLE public.sales
+  ADD COLUMN IF NOT EXISTS payment_details jsonb NOT NULL DEFAULT '[]'::jsonb;
+
+DROP FUNCTION IF EXISTS public.complete_sale(text, text, timestamptz, uuid, text, jsonb);
+
 CREATE OR REPLACE FUNCTION public.complete_sale(
   target_pharmacy_id text,
   target_invoice_number text,
   target_sale_date timestamptz,
   target_customer_id uuid,
   target_payment_method text,
-  target_items jsonb
+  target_items jsonb,
+  target_payments jsonb
 )
 RETURNS uuid
 LANGUAGE plpgsql
@@ -18,9 +24,13 @@ DECLARE
   new_sale_id uuid;
   current_user_id uuid := auth.uid();
   item jsonb;
+  payment_entry jsonb;
   item_medicine_id uuid;
   item_quantity integer;
   item_unit_price numeric;
+  payment_method text;
+  payment_amount numeric;
+  payment_total numeric := 0;
   inventory_quantity integer;
   inventory_expiry date;
   inventory_name text;
@@ -43,7 +53,47 @@ BEGIN
     RAISE EXCEPTION 'Invalid payment method';
   END IF;
 
-  IF jsonb_typeof(target_items) <> 'array' OR jsonb_array_length(target_items) = 0 THEN
+  IF target_payments IS NULL OR jsonb_typeof(target_payments) IS DISTINCT FROM 'array' THEN
+    RAISE EXCEPTION 'At least one valid payment method and amount is required';
+  END IF;
+
+  IF jsonb_array_length(target_payments) = 0 THEN
+    RAISE EXCEPTION 'At least one valid payment method and amount is required';
+  END IF;
+
+  IF target_payment_method IS DISTINCT FROM (target_payments->0->>'method') THEN
+    RAISE EXCEPTION 'The primary payment method must match the first payment entry';
+  END IF;
+
+  FOR payment_entry IN SELECT value FROM jsonb_array_elements(target_payments)
+  LOOP
+    IF jsonb_typeof(payment_entry) IS DISTINCT FROM 'object' THEN
+      RAISE EXCEPTION 'Each payment must include a valid method and amount';
+    END IF;
+
+    BEGIN
+      payment_method := payment_entry->>'method';
+      payment_amount := (payment_entry->>'amount')::numeric;
+    EXCEPTION WHEN invalid_text_representation OR numeric_value_out_of_range THEN
+      RAISE EXCEPTION 'Each payment must include a valid method and amount';
+    END;
+
+    IF payment_method IS NULL OR payment_method NOT IN ('Cash', 'Card', 'Credit', 'Mpamba', 'Airtel Money', 'Bank Transfer') THEN
+      RAISE EXCEPTION 'Invalid payment method';
+    END IF;
+
+    IF payment_amount IS NULL OR payment_amount <= 0 OR payment_amount <> round(payment_amount, 2) THEN
+      RAISE EXCEPTION 'Payment amounts must be positive values with at most two decimal places';
+    END IF;
+
+    payment_total := payment_total + payment_amount;
+  END LOOP;
+
+  IF target_items IS NULL OR jsonb_typeof(target_items) IS DISTINCT FROM 'array' THEN
+    RAISE EXCEPTION 'A sale must contain at least one item';
+  END IF;
+
+  IF jsonb_array_length(target_items) = 0 THEN
     RAISE EXCEPTION 'A sale must contain at least one item';
   END IF;
 
@@ -125,6 +175,10 @@ BEGIN
       + ((item->>'quantity')::integer * (item->>'unitPrice')::numeric);
   END LOOP;
 
+  IF round(payment_total, 2) <> round(total_amount, 2) THEN
+    RAISE EXCEPTION 'Payment amounts must equal the sale total';
+  END IF;
+
   INSERT INTO sales (
     invoice_number,
     user_id,
@@ -136,6 +190,7 @@ BEGIN
     tax,
     total,
     payment_method,
+    payment_details,
     status
   )
   VALUES (
@@ -149,6 +204,7 @@ BEGIN
     0,
     total_amount,
     target_payment_method,
+    target_payments,
     'Completed'
   )
   RETURNING id INTO new_sale_id;
@@ -166,5 +222,5 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.complete_sale(text, text, timestamptz, uuid, text, jsonb) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.complete_sale(text, text, timestamptz, uuid, text, jsonb) TO authenticated;
+REVOKE ALL ON FUNCTION public.complete_sale(text, text, timestamptz, uuid, text, jsonb, jsonb) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.complete_sale(text, text, timestamptz, uuid, text, jsonb, jsonb) TO authenticated;

@@ -5,6 +5,8 @@ import { saleService } from '@services/saleService'
 import { useAuthStore } from '@store/authStore'
 import { useCartStore } from '@store/cartStore'
 import { PHARMACIES } from '@config/pharmacyConfig'
+import type { PaymentDetail } from '@services/saleService'
+import { formatCurrency } from '@utils/formatters'
 import MedicineSelector from '@components/POS/MedicineSelector'
 import Cart from '@components/POS/Cart'
 import Receipt, { ReceiptData, ReceiptItem } from '@components/POS/Receipt'
@@ -48,7 +50,7 @@ export default function POSPage() {
     }
   }
 
-  const handleCheckout = async (total: number, paymentMethod: string): Promise<void> => {
+  const handleCheckout = async (total: number, paymentDetails: PaymentDetail[]): Promise<void> => {
     if (cartItems.length === 0 || !user) {
       setError('Cart is empty or user not authenticated')
       return
@@ -71,7 +73,8 @@ export default function POSPage() {
         invoiceNumber,
         saleDate: new Date().toISOString(),
         amountReceived: total,
-        paymentMethod: paymentMethod as 'Cash' | 'Card' | 'Credit' | 'Mpamba' | 'Airtel Money' | 'Bank Transfer',
+        paymentMethod: paymentDetails[0].method,
+        paymentDetails,
       }
 
       await saleService.create(checkoutRequest)
@@ -101,7 +104,9 @@ export default function POSPage() {
         total,
         amountReceived: total,
         change: 0,
-        paymentMethod: paymentMethod as 'Cash' | 'Card' | 'Credit' | 'Mpamba' | 'Airtel Money' | 'Bank Transfer',
+        paymentMethod: paymentDetails
+          .map((payment) => `${payment.method}: ${formatCurrency(payment.amount)}`)
+          .join(', '),
       }
 
       setReceiptData(newReceiptData)

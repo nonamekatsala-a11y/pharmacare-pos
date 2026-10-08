@@ -9,6 +9,44 @@ const getSalesPharmacyId = (): string | undefined => {
     : user?.pharmacyId || selectedPharmacy?.id
 }
 
+export type PaymentMethod = 'Cash' | 'Card' | 'Credit' | 'Mpamba' | 'Airtel Money' | 'Bank Transfer'
+
+export interface PaymentDetail {
+  method: PaymentMethod
+  amount: number
+}
+
+const paymentMethods: readonly PaymentMethod[] = [
+  'Cash',
+  'Card',
+  'Credit',
+  'Mpamba',
+  'Airtel Money',
+  'Bank Transfer',
+]
+
+const isPaymentMethod = (value: unknown): value is PaymentMethod =>
+  typeof value === 'string' && paymentMethods.some((method) => method === value)
+
+const parsePaymentDetails = (value: unknown): PaymentDetail[] => {
+  if (value == null) return []
+  if (!Array.isArray(value)) throw new Error('Sale payment details are invalid.')
+
+  return value.map((entry) => {
+    if (typeof entry !== 'object' || entry === null) {
+      throw new Error('Sale payment details are invalid.')
+    }
+
+    const detail = entry as { method?: unknown; amount?: unknown }
+    const amount = Number(detail.amount)
+    if (!isPaymentMethod(detail.method) || !Number.isFinite(amount) || amount < 0) {
+      throw new Error('Sale payment details are invalid.')
+    }
+
+    return { method: detail.method, amount }
+  })
+}
+
 const getMedicineNames = async (pharmacyId: string, medicineIds: string[]): Promise<Map<string, string>> => {
   const uniqueIds = Array.from(new Set(medicineIds))
   if (uniqueIds.length === 0) return new Map()
@@ -53,7 +91,8 @@ export interface Sale {
   discount: number
   tax: number
   total: number
-  paymentMethod: 'Cash' | 'Card' | 'Credit' | 'Mpamba' | 'Airtel Money' | 'Bank Transfer'
+  paymentMethod: PaymentMethod
+  paymentDetails?: PaymentDetail[]
   status: 'Completed' | 'Refunded'
   items: SaleItem[]
   createdAt: string
@@ -78,7 +117,8 @@ export interface CheckoutRequest {
   invoiceNumber: string
   saleDate: string
   amountReceived: number
-  paymentMethod: 'Cash' | 'Card' | 'Credit' | 'Mpamba' | 'Airtel Money' | 'Bank Transfer'
+  paymentMethod: PaymentMethod
+  paymentDetails: PaymentDetail[]
   customerId?: string
 }
 
@@ -126,7 +166,7 @@ export const saleService = {
     const supabase = getSupabaseClient()
     const { data, error } = await supabase
       .from('sales')
-      .select('id, invoice_number, user_id, customer_id, sale_date, subtotal, discount, tax, total, payment_method, status, created_at, sale_items(id, sale_id, medicine_id, quantity, unit_price, line_total)')
+      .select('id, invoice_number, user_id, customer_id, sale_date, subtotal, discount, tax, total, payment_method, payment_details, status, created_at, sale_items(id, sale_id, medicine_id, quantity, unit_price, line_total)')
       .eq('pharmacy_id', pharmacyId)
       .eq('status', 'Completed')
       .order('sale_date', { ascending: false })
@@ -151,6 +191,7 @@ export const saleService = {
         tax: number
         total: number
         payment_method: Sale['paymentMethod']
+        payment_details: unknown
         status: Sale['status']
         created_at: string
         sale_items: Array<{
@@ -174,6 +215,7 @@ export const saleService = {
         tax: Number(row.tax),
         total: Number(row.total),
         paymentMethod: row.payment_method,
+        paymentDetails: parsePaymentDetails(row.payment_details),
         status: row.status,
         items: (row.sale_items || []).map((item) => ({
           id: item.id,
@@ -286,8 +328,9 @@ export const saleService = {
       target_invoice_number: sale.invoiceNumber,
       target_sale_date: sale.saleDate,
       target_customer_id: sale.customerId || null,
-      target_payment_method: sale.paymentMethod,
+      target_payment_method: sale.paymentDetails[0]?.method || sale.paymentMethod,
       target_items: sale.items,
+      target_payments: sale.paymentDetails,
     })
 
     if (checkoutError) throw new Error(checkoutError.message)
@@ -472,6 +515,7 @@ export const saleService = {
       tax: Number(saleRow.tax),
       total: Number(saleRow.total),
       paymentMethod: saleRow.payment_method,
+      paymentDetails: parsePaymentDetails(saleRow.payment_details),
       status: saleRow.status,
       items: (itemRows || []).map((item) => ({
         id: item.id,
@@ -497,6 +541,7 @@ export const saleService = {
       .from('sales')
       .update({
         payment_method: sale.paymentMethod,
+        ...(sale.paymentDetails ? { payment_details: sale.paymentDetails } : {}),
         status: sale.status,
         subtotal: sale.subtotal,
         total: sale.total,
@@ -505,7 +550,7 @@ export const saleService = {
       })
       .eq('id', id)
       .eq('pharmacy_id', pharmacyId)
-      .select('id, invoice_number, user_id, customer_id, sale_date, subtotal, discount, tax, total, payment_method, status, created_at')
+      .select('id, invoice_number, user_id, customer_id, sale_date, subtotal, discount, tax, total, payment_method, payment_details, status, created_at')
       .single()
 
     if (saleError) throw saleError
@@ -545,6 +590,7 @@ export const saleService = {
         tax: Number(saleRow.tax),
         total: Number(saleRow.total),
         paymentMethod: saleRow.payment_method,
+        paymentDetails: parsePaymentDetails(saleRow.payment_details),
         status: saleRow.status,
         items: (itemRows || []).map((item) => ({
           id: item.id,
@@ -577,6 +623,7 @@ export const saleService = {
       tax: Number(saleRow.tax),
       total: Number(saleRow.total),
       paymentMethod: saleRow.payment_method,
+      paymentDetails: parsePaymentDetails(saleRow.payment_details),
       status: saleRow.status,
       items: (existingItems || []).map((item) => ({
         id: item.id,

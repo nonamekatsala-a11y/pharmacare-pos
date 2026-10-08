@@ -32,7 +32,7 @@ export default function SaleDetailModal({
   if (sale && !isEditMode) {
     if (editedItems.length === 0 || editedItems[0]?.saleId !== sale.id) {
       setEditedItems(sale.items)
-      setEditedPaymentMethod(sale.paymentMethod)
+      setEditedPaymentMethod(sale.paymentDetails?.[0]?.method || sale.paymentMethod)
       setEditedStatus(sale.status)
     }
   }
@@ -42,7 +42,7 @@ export default function SaleDetailModal({
 
     setIsEditMode(true)
     setEditedItems(sale.items)
-    setEditedPaymentMethod(sale.paymentMethod)
+    setEditedPaymentMethod(sale.paymentDetails?.[0]?.method || sale.paymentMethod)
     setEditedStatus(sale.status)
   }
 
@@ -51,7 +51,7 @@ export default function SaleDetailModal({
 
     setIsEditMode(false)
     setEditedItems(sale.items)
-    setEditedPaymentMethod(sale.paymentMethod)
+    setEditedPaymentMethod(sale.paymentDetails?.[0]?.method || sale.paymentMethod)
     setEditedStatus(sale.status)
   }
 
@@ -68,13 +68,37 @@ export default function SaleDetailModal({
 
     // Recalculate totals
     const subtotal = editedItems.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
+    const total = subtotal + sale.tax - sale.discount
+    const originalPayments = sale.paymentDetails?.length
+      ? sale.paymentDetails
+      : [{ method: sale.paymentMethod, amount: sale.total }]
+    const originalPaymentMethod = originalPayments[0].method
+    let paymentDetails = originalPayments
+
+    if (editedPaymentMethod !== originalPaymentMethod || originalPayments.length === 0) {
+      paymentDetails = [{ method: editedPaymentMethod, amount: total }]
+    } else {
+      const originalPaymentTotal = originalPayments.reduce((sum, payment) => sum + payment.amount, 0)
+      let allocatedCents = 0
+      paymentDetails = originalPayments.map((payment, index) => {
+        const amountCents = index === originalPayments.length - 1
+          ? Math.round(total * 100) - allocatedCents
+          : originalPaymentTotal > 0
+            ? Math.round(Math.round(total * 100) * payment.amount / originalPaymentTotal)
+            : 0
+        allocatedCents += amountCents
+        return { ...payment, amount: amountCents / 100 }
+      })
+    }
+
     const updatedSale: Sale = {
       ...sale,
       items: editedItems,
       paymentMethod: editedPaymentMethod,
+      paymentDetails,
       status: editedStatus,
       subtotal,
-      total: subtotal + sale.tax - sale.discount,
+      total,
     }
 
     if (onSave) {
@@ -109,9 +133,20 @@ export default function SaleDetailModal({
                 <option value="Cash">Cash</option>
                 <option value="Card">Card</option>
                 <option value="Credit">Credit</option>
+                <option value="Mpamba">Mpamba</option>
+                <option value="Airtel Money">Airtel Money</option>
+                <option value="Bank Transfer">Bank Transfer</option>
               </select>
             ) : (
-              <p className="font-semibold text-gray-900">{sale.paymentMethod}</p>
+              <div className="font-semibold text-gray-900">
+                {sale.paymentDetails?.length
+                  ? sale.paymentDetails.map((payment, index) => (
+                    <p key={`${payment.method}-${index}`}>
+                      {payment.method}: {formatCurrency(payment.amount)}
+                    </p>
+                  ))
+                  : sale.paymentMethod}
+              </div>
             )}
           </div>
           <div>

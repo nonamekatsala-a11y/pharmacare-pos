@@ -1,26 +1,64 @@
 import { useState } from 'react'
 import { useCartStore } from '@store/cartStore'
+import type { PaymentDetail, PaymentMethod } from '@services/saleService'
 import { formatCurrency } from '@utils/formatters'
 
 interface CartProps {
-  onCheckout: (total: number, paymentMethod: string) => Promise<void>
+  onCheckout: (total: number, paymentDetails: PaymentDetail[]) => Promise<void>
 }
 
 export default function Cart({ onCheckout }: CartProps) {
   const { items, removeItem, updateQuantity, getSubtotal, getTotal, clearCart } =
     useCartStore()
   const [isProcessing, setIsProcessing] = useState(false)
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('Cash')
+  const [paymentRows, setPaymentRows] = useState<{ method: PaymentMethod; amount: string }[]>([
+    { method: 'Cash', amount: '' },
+  ])
 
   const subtotal = getSubtotal()
   const total = getTotal()
+  const totalCents = Math.round(total * 100)
 
   const paymentMethods = [
     { id: 'Cash', name: 'Cash', icon: '💵' },
     { id: 'Mpamba', name: 'Mpamba', icon: '📱' },
     { id: 'Airtel Money', name: 'Airtel Money', icon: '📱' },
     { id: 'Bank Transfer', name: 'Bank Transfer', icon: '🏦' },
-  ]
+  ] as const
+
+  const manualAmounts = paymentRows.map((row) => {
+    if (!row.amount.trim()) return null
+    const amount = Number(row.amount)
+    return Number.isFinite(amount) ? Math.round(amount * 100) : Number.NaN
+  })
+  const manuallyEnteredCents = manualAmounts.reduce<number>(
+    (sum, amount) => sum + (amount === null || Number.isNaN(amount) ? 0 : amount),
+    0,
+  )
+  const firstUnspecifiedIndex = manualAmounts.findIndex((amount) => amount === null)
+  const paymentAmountsCents = manualAmounts.map((amount, index) => (
+    amount === null
+      ? index === firstUnspecifiedIndex ? totalCents - manuallyEnteredCents : 0
+      : amount
+  ))
+  const enteredAmountsAreValid = paymentRows.every((row, index) => {
+    if (!row.amount.trim()) return true
+    const amount = Number(row.amount)
+    return Number.isFinite(amount)
+      && amount > 0
+      && Math.abs(amount * 100 - Math.round(amount * 100)) < 0.000001
+      && paymentAmountsCents[index] > 0
+  })
+  const paymentTotalCents = paymentAmountsCents.reduce((sum, amount) => sum + amount, 0)
+  const paymentDetails: PaymentDetail[] = paymentRows.flatMap((row, index) => (
+    Number.isFinite(paymentAmountsCents[index]) && paymentAmountsCents[index] > 0
+      ? [{ method: row.method, amount: paymentAmountsCents[index] / 100 }]
+      : []
+  ))
+  const paymentsAreValid = enteredAmountsAreValid
+    && paymentAmountsCents.every((amount) => amount >= 0)
+    && paymentTotalCents === totalCents
+    && paymentDetails.length > 0
 
   const handleRemove = (medicineId: string) => {
     removeItem(medicineId)
@@ -41,9 +79,11 @@ export default function Cart({ onCheckout }: CartProps) {
   }
 
   const handleCheckout = async () => {
+    if (!paymentsAreValid) return
+
     setIsProcessing(true)
     try {
-      await onCheckout(total, selectedPaymentMethod)
+      await onCheckout(total, paymentDetails)
     } finally {
       setIsProcessing(false)
     }
@@ -135,30 +175,100 @@ export default function Cart({ onCheckout }: CartProps) {
 
       {/* Payment Method Selection */}
       <div className="mb-3 flex-shrink-0">
-        <h3 className="text-xs font-semibold text-primary-700 mb-2">Select Payment Method</h3>
-        <div className="grid grid-cols-2 gap-2">
-          {paymentMethods.map((method) => (
-            <button
-              key={method.id}
-              onClick={() => setSelectedPaymentMethod(method.id)}
-              className={`flex items-center justify-center gap-2 p-2 rounded-lg border-2 transition-colors ${
-                selectedPaymentMethod === method.id
-                  ? 'border-primary-500 bg-primary-50 text-primary-700'
-                  : 'border-primary-200 bg-white text-primary-600 hover:bg-primary-50'
-              }`}
-            >
-              <span className="text-lg">{method.icon}</span>
-              <span className="text-xs font-semibold">{method.name}</span>
-            </button>
-          ))}
+        <h3 className="text-xs font-semibold text-primary-700 mb-2">Payment Methods and Amounts</h3>
+        <div className="space-y-2">
+          {paymentRows.map((row, index) => {
+            const availableMethods = paymentMethods.filter((method) => (
+              method.id === row.method || !paymentRows.some((payment) => payment.method === method.id)
+            ))
+
+            return (
+              <div key={index} className="flex items-center gap-2">
+                <select
+                  aria-label={`Payment method ${index + 1}`}
+                  value={row.method}
+                  onChange={(event) => {
+                    const method = event.target.value as PaymentMethod
+                    setPaymentRows((rows) => rows.map((payment, rowIndex) => (
+                      rowIndex === index ? { ...payment, method } : payment
+                    )))
+                  }}
+                  className="min-w-0 flex-1 rounded-lg border border-primary-200 bg-white px-2 py-2 text-xs text-primary-700"
+                >
+                  {availableMethods.map((method) => (
+                    <option key={method.id} value={method.id}>{method.name}</option>
+                  ))}
+                </select>
+                <label className="flex items-center gap-1 text-xs text-primary-600">
+                  <span className="sr-only">Amount for {row.method}</span>
+                  <span>K</span>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={row.amount || (
+                      index === firstUnspecifiedIndex && Number.isFinite(paymentAmountsCents[index])
+                        ? (paymentAmountsCents[index] / 100).toFixed(2)
+                        : ''
+                    )}
+                    onChange={(event) => {
+                      const amount = event.target.value
+                      setPaymentRows((rows) => rows.map((payment, rowIndex) => (
+                        rowIndex === index ? { ...payment, amount } : payment
+                      )))
+                    }}
+                    className="w-24 rounded-lg border border-primary-200 px-2 py-2 text-right text-xs text-primary-700"
+                  />
+                </label>
+                {paymentRows.length > 1 && (
+                  <button
+                    type="button"
+                    aria-label={`Remove ${row.method} payment`}
+                    onClick={() => setPaymentRows((rows) => rows.filter((_, rowIndex) => rowIndex !== index))}
+                    className="rounded px-2 py-1 text-sm font-bold text-red-500 hover:bg-red-50"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            )
+          })}
         </div>
+        <div className="mt-2 flex items-center justify-between text-xs">
+          <span className="text-primary-600">
+            Payment total: {Number.isFinite(paymentTotalCents)
+              ? `${formatCurrency(paymentTotalCents / 100)} / ${formatCurrency(total)}`
+              : `Invalid amount / ${formatCurrency(total)}`}
+          </span>
+          {paymentRows.length < paymentMethods.length && (
+            <button
+              type="button"
+              onClick={() => {
+                const nextMethod = paymentMethods.find((method) => (
+                  !paymentRows.some((payment) => payment.method === method.id)
+                ))
+                if (nextMethod) {
+                  setPaymentRows((rows) => [...rows, { method: nextMethod.id, amount: '' }])
+                }
+              }}
+              className="font-semibold text-primary-600 hover:text-primary-800"
+            >
+              + Add payment
+            </button>
+          )}
+        </div>
+        {items.length > 0 && !paymentsAreValid && (
+          <p className="mt-1 text-xs text-red-600">
+            Enter valid positive amounts that add up exactly to the sale total.
+          </p>
+        )}
       </div>
 
       {/* Action Buttons */}
       <div className="space-y-2 flex-shrink-0">
         <button
           onClick={handleCheckout}
-          disabled={items.length === 0 || isProcessing}
+          disabled={items.length === 0 || isProcessing || !paymentsAreValid}
           className="w-full bg-primary-500 text-white font-semibold py-2.5 rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
         >
           {isProcessing ? 'COMPLETING SALE...' : 'COMPLETE SALE'}
