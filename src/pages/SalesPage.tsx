@@ -177,6 +177,25 @@ export default function SalesPage() {
   const filteredMedicines = salesByMedicine.filter(medicine =>
     medicine.productName && medicine.productName.toLowerCase().includes(searchTerm.toLowerCase())
   )
+  const medicineTotals = Array.from(
+    filteredMedicines.reduce((totals, medicine) => {
+      const current = totals.get(medicine.medicineId)
+      if (current) {
+        current.quantity += medicine.quantity
+        current.revenue += medicine.revenue
+      } else {
+        totals.set(medicine.medicineId, {
+          medicineId: medicine.medicineId,
+          productName: medicine.productName,
+          quantity: medicine.quantity,
+          revenue: medicine.revenue,
+        })
+      }
+      return totals
+    }, new Map<string, { medicineId: string; productName: string; quantity: number; revenue: number }>())
+      .values(),
+  ).sort((a, b) => a.productName.localeCompare(b.productName))
+  const totalMedicineQuantity = medicineTotals.reduce((sum, medicine) => sum + medicine.quantity, 0)
 
   if (isLoading) {
     return <div className="p-8">Loading sales data...</div>
@@ -407,21 +426,31 @@ export default function SalesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredMedicines.map((medicine, index) => (
+              {medicineTotals.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">
+                    No medicine sales found for this period.
+                  </td>
+                </tr>
+              ) : medicineTotals.map((medicine, index) => (
                 <tr key={medicine.medicineId} className="hover:bg-gray-50">
                   <td className="px-4 py-3 text-sm text-gray-700">{index + 1}</td>
                   <td className="px-4 py-3 text-sm text-gray-900 font-medium">{medicine.productName}</td>
                   <td className="px-4 py-3 text-sm text-gray-700">{medicine.quantity}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{formatCurrency(medicine.revenue / medicine.quantity)}</td>
+                  <td className="px-4 py-3 text-sm text-gray-700">
+                    {formatCurrency(medicine.quantity > 0 ? medicine.revenue / medicine.quantity : 0)}
+                  </td>
                   <td className="px-4 py-3 text-sm text-gray-900 font-semibold">{formatCurrency(medicine.revenue)}</td>
                 </tr>
               ))}
             </tbody>
             <tfoot className="bg-gray-50 border-t border-gray-200">
               <tr>
-                <td colSpan={4} className="px-4 py-3 text-sm font-semibold text-gray-700">Total</td>
+                <td colSpan={2} className="px-4 py-3 text-sm font-semibold text-gray-700">Total</td>
+                <td className="px-4 py-3 text-sm font-bold text-gray-900">{totalMedicineQuantity}</td>
+                <td className="px-4 py-3" aria-hidden="true" />
                 <td className="px-4 py-3 text-sm font-bold text-gray-900">
-                  {formatCurrency(filteredMedicines.reduce((sum, m) => sum + m.revenue, 0))}
+                  {formatCurrency(medicineTotals.reduce((sum, medicine) => sum + medicine.revenue, 0))}
                 </td>
               </tr>
             </tfoot>
