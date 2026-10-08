@@ -16,6 +16,7 @@ export default function SalesPage() {
   const [adminSelectedPharmacy, setAdminSelectedPharmacy] = useState<Pharmacy | null>(null)
   const [medicineTab, setMedicineTab] = useState<'today' | 'month'>('today')
   const [searchTerm, setSearchTerm] = useState('')
+  const [medicineSalesPage, setMedicineSalesPage] = useState(1)
 
   // Initialize admin pharmacy selection
   useEffect(() => {
@@ -47,6 +48,7 @@ export default function SalesPage() {
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
   const [isSaleDetailOpen, setIsSaleDetailOpen] = useState(false)
   const salesRecordsPageSize = 10
+  const medicineSalesPageSize = 10
 
   useEffect(() => {
     loadSalesData()
@@ -135,6 +137,7 @@ export default function SalesPage() {
       setSalesByMedicine(medicineData)
       setSalesRecords(filteredSales)
       setSalesRecordsPage(1)
+      setMedicineSalesPage(1)
     } catch (error) {
       console.error('Failed to load sales data:', error)
     } finally {
@@ -209,6 +212,15 @@ export default function SalesPage() {
     ? 0
     : (salesRecordsPage - 1) * salesRecordsPageSize + 1
   const lastVisibleSalesRecord = Math.min(salesRecordsPage * salesRecordsPageSize, salesRecords.length)
+  const medicineSalesPageCount = Math.ceil(medicineTotals.length / medicineSalesPageSize)
+  const paginatedMedicineTotals = medicineTotals.slice(
+    (medicineSalesPage - 1) * medicineSalesPageSize,
+    medicineSalesPage * medicineSalesPageSize,
+  )
+  const firstVisibleMedicine = medicineTotals.length === 0
+    ? 0
+    : (medicineSalesPage - 1) * medicineSalesPageSize + 1
+  const lastVisibleMedicine = Math.min(medicineSalesPage * medicineSalesPageSize, medicineTotals.length)
 
   if (isLoading) {
     return <div className="p-8">Loading sales data...</div>
@@ -443,7 +455,10 @@ export default function SalesPage() {
             type="text"
             placeholder="Search medicine..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value)
+              setMedicineSalesPage(1)
+            }}
             className="rounded-lg border border-gray-300 px-4 py-2 text-gray-700 focus:border-primary-500 focus:outline-none w-64"
           />
           <button
@@ -473,9 +488,11 @@ export default function SalesPage() {
                     No medicine sales found for this period.
                   </td>
                 </tr>
-              ) : medicineTotals.map((medicine, index) => (
+              ) : paginatedMedicineTotals.map((medicine, index) => (
                 <tr key={medicine.nameKey} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm text-gray-700">{index + 1}</td>
+                  <td className="px-4 py-3 text-sm text-gray-700">
+                    {(medicineSalesPage - 1) * medicineSalesPageSize + index + 1}
+                  </td>
                   <td className="px-4 py-3 text-sm text-gray-900 font-medium">{medicine.productName}</td>
                   <td className="px-4 py-3 text-sm text-gray-700">{medicine.quantity}</td>
                   <td className="px-4 py-3 text-sm text-gray-700">
@@ -497,6 +514,34 @@ export default function SalesPage() {
             </tfoot>
           </table>
         </div>
+        {medicineTotals.length > 0 && (
+          <div className="flex items-center justify-between mt-4">
+            <p className="text-sm text-gray-600">
+              Showing {firstVisibleMedicine}-{lastVisibleMedicine} of {medicineTotals.length} medicines
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setMedicineSalesPage(page => Math.max(1, page - 1))}
+                disabled={medicineSalesPage === 1}
+                className="px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-gray-600">
+                Page {medicineSalesPage} of {medicineSalesPageCount}
+              </span>
+              <button
+                type="button"
+                onClick={() => setMedicineSalesPage(page => Math.min(medicineSalesPageCount, page + 1))}
+                disabled={medicineSalesPage === medicineSalesPageCount}
+                className="px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <SaleDetailModal
