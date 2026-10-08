@@ -43,8 +43,10 @@ export default function SalesPage() {
   const [salesByPaymentMethod, setSalesByPaymentMethod] = useState<{ method: string; amount: number; percentage: number; icon: string }[]>([])
   const [salesByMedicine, setSalesByMedicine] = useState<MedicineSale[]>([])
   const [salesRecords, setSalesRecords] = useState<Sale[]>([])
+  const [salesRecordsPage, setSalesRecordsPage] = useState(1)
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
   const [isSaleDetailOpen, setIsSaleDetailOpen] = useState(false)
+  const salesRecordsPageSize = 10
 
   useEffect(() => {
     loadSalesData()
@@ -132,6 +134,7 @@ export default function SalesPage() {
       setSalesByPaymentMethod(paymentMethodData)
       setSalesByMedicine(medicineData)
       setSalesRecords(filteredSales)
+      setSalesRecordsPage(1)
     } catch (error) {
       console.error('Failed to load sales data:', error)
     } finally {
@@ -197,6 +200,15 @@ export default function SalesPage() {
       .values(),
   ).sort((a, b) => a.productName.localeCompare(b.productName))
   const totalMedicineQuantity = medicineTotals.reduce((sum, medicine) => sum + medicine.quantity, 0)
+  const salesRecordsPageCount = Math.ceil(salesRecords.length / salesRecordsPageSize)
+  const paginatedSalesRecords = salesRecords.slice(
+    (salesRecordsPage - 1) * salesRecordsPageSize,
+    salesRecordsPage * salesRecordsPageSize,
+  )
+  const firstVisibleSalesRecord = salesRecords.length === 0
+    ? 0
+    : (salesRecordsPage - 1) * salesRecordsPageSize + 1
+  const lastVisibleSalesRecord = Math.min(salesRecordsPage * salesRecordsPageSize, salesRecords.length)
 
   if (isLoading) {
     return <div className="p-8">Loading sales data...</div>
@@ -333,7 +345,7 @@ export default function SalesPage() {
                   </td>
                 </tr>
               ) : (
-                salesRecords.map((sale) => (
+                paginatedSalesRecords.map((sale) => (
                   <tr key={sale.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-sm font-mono text-gray-900">{sale.invoiceNumber}</td>
                     <td className="px-4 py-3 text-sm text-gray-700">{new Date(sale.saleDate).toLocaleString()}</td>
@@ -365,6 +377,34 @@ export default function SalesPage() {
             </tbody>
           </table>
         </div>
+        {salesRecords.length > 0 && (
+          <div className="flex items-center justify-between mt-4">
+            <p className="text-sm text-gray-600">
+              Showing {firstVisibleSalesRecord}-{lastVisibleSalesRecord} of {salesRecords.length} sales records
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSalesRecordsPage(page => Math.max(1, page - 1))}
+                disabled={salesRecordsPage === 1}
+                className="px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-gray-600">
+                Page {salesRecordsPage} of {salesRecordsPageCount}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSalesRecordsPage(page => Math.min(salesRecordsPageCount, page + 1))}
+                disabled={salesRecordsPage === salesRecordsPageCount}
+                className="px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Medicines Sold Section */}
