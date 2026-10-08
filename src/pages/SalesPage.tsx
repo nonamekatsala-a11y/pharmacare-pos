@@ -179,20 +179,21 @@ export default function SalesPage() {
   )
   const medicineTotals = Array.from(
     filteredMedicines.reduce((totals, medicine) => {
-      const current = totals.get(medicine.medicineId)
+      const nameKey = medicine.productName.trim().toLocaleLowerCase()
+      const current = totals.get(nameKey)
       if (current) {
         current.quantity += medicine.quantity
         current.revenue += medicine.revenue
       } else {
-        totals.set(medicine.medicineId, {
-          medicineId: medicine.medicineId,
+        totals.set(nameKey, {
+          nameKey,
           productName: medicine.productName,
           quantity: medicine.quantity,
           revenue: medicine.revenue,
         })
       }
       return totals
-    }, new Map<string, { medicineId: string; productName: string; quantity: number; revenue: number }>())
+    }, new Map<string, { nameKey: string; productName: string; quantity: number; revenue: number }>())
       .values(),
   ).sort((a, b) => a.productName.localeCompare(b.productName))
   const totalMedicineQuantity = medicineTotals.reduce((sum, medicine) => sum + medicine.quantity, 0)
@@ -433,7 +434,7 @@ export default function SalesPage() {
                   </td>
                 </tr>
               ) : medicineTotals.map((medicine, index) => (
-                <tr key={medicine.medicineId} className="hover:bg-gray-50">
+                <tr key={medicine.nameKey} className="hover:bg-gray-50">
                   <td className="px-4 py-3 text-sm text-gray-700">{index + 1}</td>
                   <td className="px-4 py-3 text-sm text-gray-900 font-medium">{medicine.productName}</td>
                   <td className="px-4 py-3 text-sm text-gray-700">{medicine.quantity}</td>
